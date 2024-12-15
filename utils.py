@@ -23,6 +23,8 @@ def make_interactions_dataset(
         num_groups: int = 5,
         goods: List[str] = GOODS,
         outer_prob: float = 0.2,
+        raw_word_null_prob: float = 0.3,
+        word_null_prob: float = 0.1,
 ) -> Tuple[pd.DataFrame, List[int], Dict[int, int], Dict[int, str]]:
     """
     Генерируем транзакции между фирмами +- осмысленно.
@@ -56,6 +58,9 @@ def make_interactions_dataset(
         while inn_dt == inn_kt:
             inn_dt = random.choice([inn for inn, g in inn2group.items() if g == group])
 
+        raw_word = random.choice([None, "word1", "word2", "word3", "word4"]) if random.random() > raw_word_null_prob else None
+        word = None if raw_word is None or random.random() < word_null_prob else f"clean_{raw_word[-1]}"
+
         transaction = {
             "id_trans": i + 1,
             "inn_kt": inn_kt,
@@ -71,6 +76,8 @@ def make_interactions_dataset(
             "dt_group_num": inn2group[inn_dt],
             "kt_group_name": group2name[inn2group[inn_kt]],
             "dt_group_name": group2name[inn2group[inn_dt]],
+            "raw_word": raw_word,
+            "word": word,
         }
         transactions.append(transaction)
 
