@@ -1,1 +1,2 @@
-from src.utils.utils import make_interactions_dataset, generate_feature_list, create_features, calculate_auc_score, calculate_precision_at_k
+from src.utils.data_utils import InteractionsDataset, make_interactions_dataset, generate_feature_list, create_features
+from src.utils.metrics_utils import calculate_auc_score, calculate_precision_at_k

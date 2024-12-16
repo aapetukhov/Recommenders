@@ -4,8 +4,9 @@ import matplotlib.pyplot as plt
 import random
 from faker import Faker
 from typing import List, Tuple, Dict
-from lightfm.evaluation import precision_at_k
-from lightfm.evaluation import auc_score
+
+from scipy.sparse import dok_matrix, csr_matrix
+from collections import defaultdict
 
 # imports re for text cleaning 
 import re
@@ -14,6 +15,85 @@ from datetime import datetime, timedelta, date
 GOODS = [
     "мясо", "просо", "колесо", "серсо", "лассо", "молоко", "хлеб", "сыр", "кофе", "чай", "яйца", "яйцо", "масло", "сок", "йогурт", "шоколад", "овощи", "фрукты", "баклажан"
 ]
+
+
+
+class InteractionsDataset:
+    def __init__(
+            self,
+            interactions: pd.DataFrame,
+            inn_kt_col_name: str = "inn_kt",
+            inn_dt_col_name: str = "inn_dt",
+            normalize_rows: bool = True,
+        ):
+        """
+        Init the dataset:
+        create mappings and calculate sparse interaction matrix.
+
+        :param interactions: Input pandas df
+        :param inn_kt_col_name: creditor col name
+        :param inn_dt_col_name: debtor col name
+        """
+        self.inn2id = {}
+        self.id2inn = {}
+        self.inn_kt_col_name = inn_kt_col_name
+        self.inn_dt_col_name = inn_dt_col_name
+
+        # TODO: maybe not in pandas but pyspark?
+        all_inns = pd.concat([interactions[inn_kt_col_name], interactions[inn_dt_col_name]]).unique()
+        # yiels all unique inns as array, NOT a zip
+        for idx, inn in enumerate(all_inns):
+            self.inn2id[inn] = idx
+            self.id2inn[idx] = inn
+
+        self.num_inns = len(self.inn2id)
+
+        self.sparse_matrix = self._build_sparse_matrix(interactions)
+        if normalize_rows:
+            self.normalize_rows()
+
+    def _build_sparse_matrix(self, interactions: pd.DataFrame) -> csr_matrix:
+        """
+        Build a sparse matrix from the interactions df.
+        Employing DOK matrix for inceremntal efficiency
+        (see https://docs.scipy.org/doc/scipy/reference/generated/scipy.sparse.dok_matrix.html)
+
+        :param interactions: df with interactions in columns (see names above).
+        :return: sparse interaction matrix.
+        """
+        sparse_matrix = dok_matrix((self.num_inns, self.num_inns), dtype=np.float32)
+
+        for _, row in interactions.iterrows():
+            inn_kt = row[self.inn_kt_col_name]
+            inn_dt = row[self.inn_dt_col_name]
+
+            id_kt = self.inn2id[inn_kt]
+            id_dt = self.inn2id[inn_dt]
+            # TODO: maybe add not 1 but c_sum?
+            sparse_matrix[id_kt, id_dt] += 1
+
+        return sparse_matrix.tocsr()
+
+    def normalize_rows(self):
+        """
+        Normalize rows so each row sums to 1.
+        Like in LightFM.
+        """
+        row_sums = self.sparse_matrix.sum(axis=1)
+        row_indices, col_indices = self.sparse_matrix.nonzero()
+
+        for i, j in zip(row_indices, col_indices):
+            if row_sums[i, 0] != 0:
+                self.sparse_matrix[i, j] /= row_sums[i, 0]
+
+    def get_inn_from_id(self, id_: int) -> int:
+        return self.id2inn.get(id_)
+
+    def get_id_from_inn(self, inn: int) -> int:
+        return self.inn2id.get(inn)
+
+    def get_sparse_matrix(self) -> csr_matrix:
+        return self.sparse_matrix
 
 
 
@@ -85,7 +165,6 @@ def make_interactions_dataset(
     return pd.DataFrame(transactions), inns, inn2group, group2name
 
 
-
 def generate_feature_list(dataframe, features_name):
     """
     Generate features list for mapping 
@@ -139,57 +218,3 @@ def create_features(dataframe, features_name, id_col_name):
     features = features.str.split(',')
     features = list(zip(dataframe[id_col_name], features))
     return features
-
-
-def calculate_auc_score(lightfm_model, interactions_matrix, 
-                        question_features, professional_features): 
-    """
-    Measure the ROC AUC metric for a model. 
-    A perfect score is 1.0.
-
-    Parameters
-    ----------
-    lightfm_model: LightFM model 
-        A fitted lightfm model 
-    interactions_matrix : 
-        A lightfm interactions matrix 
-    question_features, professional_features: 
-        Lightfm features 
-        
-    Returns
-    -------
-    String containing AUC score 
-    """
-    score = auc_score( 
-        lightfm_model, interactions_matrix, 
-        item_features=question_features, 
-        user_features=professional_features, 
-        num_threads=4).mean()
-    return score
-
-
-def calculate_precision_at_k(lightfm_model, interactions_matrix, 
-                        question_features, professional_features): 
-    """
-    Measure the ROC AUC metric for a model. 
-    A perfect score is 1.0.
-
-    Parameters
-    ----------
-    lightfm_model: LightFM model 
-        A fitted lightfm model 
-    interactions_matrix : 
-        A lightfm interactions matrix 
-    question_features, professional_features: 
-        Lightfm features 
-        
-    Returns
-    -------
-    String containing AUC score 
-    """
-    score = precision_at_k( 
-        lightfm_model, interactions_matrix, 
-        item_features=question_features, 
-        user_features=professional_features, 
-        num_threads=4).mean()
-    return score

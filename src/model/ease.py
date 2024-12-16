@@ -4,8 +4,9 @@ import numpy as np
 class EASE:
     def __init__(
         self,
-        lambda_: float = 200.0,
+        lambda_: float = 0.5,
     ):
+        # TODO: search fr some logical lambda
         self._lambda = lambda_
 
     def fit(self, G: np.ndarray):
@@ -25,6 +26,7 @@ class EASE:
         P = np.linalg.inv(G)
         B = P / (-np.diag(P))
         B[diag_indices] = 0
+        self.B = B
 
         return B
 

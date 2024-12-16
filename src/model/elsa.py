@@ -4,7 +4,7 @@ import numpy as np
 class ELSA:
     def __init__(
         self,
-        lambda_: float = 200.0,
+        lambda_: float = 0.5,
     ):
         self._lambda = lambda_
 
