@@ -62,19 +62,19 @@ class EASE:
             from recommendations list
 
         Return:
-            an array of pairs (inn_dt, score) sorted by score
-            in descending order
+            a dataframe with inn_kt (same number as input), inn_dt and score
+            for all inn_dts which we have not yet interacted with
         """
         user_id = self.inn2id[user_inn]
-        scores = self.X[user_id, :].dot(self.B)
+        scores = self.X[user_id, :].dot(self.B).flatten()
         
         # TODO: exclude those we've interacted with
 
         results = pd.DataFrame(
             {
-                "inn_kt": [user_inn] * len(self.id2inn),
-                "inn_dt": [self.id2inn[dt_id] for dt_id in range(len(self.id2inn))],
-                "score": [(self.id2inn[dt_id], score) for dt_id, score in enumerate(scores)]
+                "inn_kt": [user_inn] * len(scores),
+                "inn_dt": [self.id2inn[dt_id] for dt_id in range(len(scores))],
+                "score": scores[0]
             }
         )
 

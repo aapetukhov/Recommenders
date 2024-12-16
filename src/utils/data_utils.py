@@ -47,6 +47,7 @@ class InteractionsDataset:
             self.id2inn[idx] = inn
 
         self.num_inns = len(self.inn2id)
+        self.interaction_sets = defaultdict(set)
 
         self.sparse_matrix = self._build_sparse_matrix(interactions)
         if normalize_rows:
@@ -67,6 +68,8 @@ class InteractionsDataset:
         for _, row in interactions.iterrows():
             inn_kt = row[self.inn_kt_col_name]
             inn_dt = row[self.inn_dt_col_name]
+
+            self.interaction_sets[inn_kt].add(inn_dt)
 
             id_kt = self.inn2id[inn_kt]
             id_dt = self.inn2id[inn_dt]
