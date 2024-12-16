@@ -61,6 +61,7 @@ class InteractionsDataset:
         :param interactions: df with interactions in columns (see names above).
         :return: sparse interaction matrix.
         """
+        # TODO: maybe float 16 is good enough?
         sparse_matrix = dok_matrix((self.num_inns, self.num_inns), dtype=np.float32)
 
         for _, row in interactions.iterrows():
