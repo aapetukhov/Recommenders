@@ -66,15 +66,15 @@ class EASE:
             for all inn_dts which we have not yet interacted with
         """
         user_id = self.inn2id[user_inn]
-        scores = self.X[user_id, :].dot(self.B).flatten()
-        
+        scores = self.X[user_id, :].dot(self.B)[0]
+
         # TODO: exclude those we've interacted with
 
         results = pd.DataFrame(
             {
                 "inn_kt": [user_inn] * len(scores),
                 "inn_dt": [self.id2inn[dt_id] for dt_id in range(len(scores))],
-                "score": scores[0]
+                "score": scores
             }
         )
 
