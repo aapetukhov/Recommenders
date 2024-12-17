@@ -1,8 +1,8 @@
+from typing import Dict, List
+
 import numpy as np
 import pandas as pd
 from scipy.sparse import csr_matrix
-
-from typing import Dict, List
 
 
 class EASE:
@@ -15,7 +15,7 @@ class EASE:
         """
         inn2id and id2inn are taken from InteractionsDataset
         """
-        
+
         # TODO: search for some logical lambda
         self.lambda_ = lambda_
         self.inn2id = inn2id
@@ -24,13 +24,13 @@ class EASE:
     def fit(self, X: csr_matrix):
         """Fits the EASE model
         https://arxiv.org/pdf/1905.03375
-        
+
         Args:
             X: User-item interactions matrix of size |U|x|I|
-            
+
             TODO: MAYBE BETTER:
             G: Gram matrix of size |I|x|I|, i.e. G = X.T x X,
-            where X is user-item interactions matrix of size |U|x|I| 
+            where X is user-item interactions matrix of size |U|x|I|
         Return: Matrix B of size |I|x|I|
         """
         # assert G is symmetric and square
@@ -45,7 +45,7 @@ class EASE:
 
         self.B = B
         self.preds = X.dot(B)
-    
+
     def predict_score(self, user_inn: int, item_inn: int):
         """Prediction for a single user-item pair"""
         item_id = self.inn2id[item_inn]
@@ -74,15 +74,17 @@ class EASE:
             {
                 "inn_kt": [user_inn] * len(scores),
                 "inn_dt": [self.id2inn[dt_id] for dt_id in range(len(scores))],
-                "score": scores
+                "score": scores,
             }
         )
 
-        return results[~results["inn_dt"].isin(interactions_set)].sort_values("score", ascending=False)
-    
+        return results[~results["inn_dt"].isin(interactions_set)].sort_values(
+            "score", ascending=False
+        )
+
     def predict(self, user_inns: List[int]):
         user_ids = [self.inn2id[user_inn] for user_inn in user_inns]
-        
+
         results = self.X[user_ids, :].dot(self.B)
         # results now contain scores for each user-inn pair (for every user in user_inns)
         # shape is |user_inns|x|I|

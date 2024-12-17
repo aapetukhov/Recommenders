@@ -1,31 +1,48 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import random
-from faker import Faker
-from typing import List, Tuple, Dict
 
-from scipy.sparse import dok_matrix, csr_matrix
-from collections import defaultdict
-
-# imports re for text cleaning 
+# imports re for text cleaning
 import re
-from datetime import datetime, timedelta, date
+from collections import defaultdict
+from datetime import date, datetime, timedelta
+from typing import Dict, List, Tuple
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+from faker import Faker
+from scipy.sparse import csr_matrix, dok_matrix
 
 GOODS = [
-    "мясо", "просо", "колесо", "серсо", "лассо", "молоко", "хлеб", "сыр", "кофе", "чай", "яйца", "яйцо", "масло", "сок", "йогурт", "шоколад", "овощи", "фрукты", "баклажан"
+    "мясо",
+    "просо",
+    "колесо",
+    "серсо",
+    "лассо",
+    "молоко",
+    "хлеб",
+    "сыр",
+    "кофе",
+    "чай",
+    "яйца",
+    "яйцо",
+    "масло",
+    "сок",
+    "йогурт",
+    "шоколад",
+    "овощи",
+    "фрукты",
+    "баклажан",
 ]
-
 
 
 class InteractionsDataset:
     def __init__(
-            self,
-            interactions: pd.DataFrame,
-            inn_kt_col_name: str = "inn_kt",
-            inn_dt_col_name: str = "inn_dt",
-            normalize_rows: bool = True,
-        ):
+        self,
+        interactions: pd.DataFrame,
+        inn_kt_col_name: str = "inn_kt",
+        inn_dt_col_name: str = "inn_dt",
+        normalize_rows: bool = True,
+    ):
         """
         Init the dataset:
         create mappings and calculate sparse interaction matrix.
@@ -40,7 +57,9 @@ class InteractionsDataset:
         self.inn_dt_col_name = inn_dt_col_name
 
         # TODO: maybe not in pandas but pyspark?
-        all_inns = pd.concat([interactions[inn_kt_col_name], interactions[inn_dt_col_name]]).unique()
+        all_inns = pd.concat(
+            [interactions[inn_kt_col_name], interactions[inn_dt_col_name]]
+        ).unique()
         # yiels all unique inns as array, NOT a zip
         for idx, inn in enumerate(all_inns):
             self.inn2id[inn] = idx
@@ -100,38 +119,41 @@ class InteractionsDataset:
         return self.sparse_matrix
 
 
-
 def make_interactions_dataset(
-        num_transactions: int = 1000,
-        num_inns: int = 100,
-        num_groups: int = 5,
-        goods: List[str] = GOODS,
-        outer_prob: float = 0.2,
-        raw_word_null_prob: float = 0.3,
-        word_null_prob: float = 0.1,
+    num_transactions: int = 1000,
+    num_inns: int = 100,
+    num_groups: int = 5,
+    goods: List[str] = GOODS,
+    outer_prob: float = 0.2,
+    raw_word_null_prob: float = 0.3,
+    word_null_prob: float = 0.1,
 ) -> Tuple[pd.DataFrame, List[int], Dict[int, int], Dict[int, str]]:
     """
     Генерируем транзакции между фирмами +- осмысленно.
     Идея в том что заводим группы объектов внутри которых они взаимодействуют с вероятностью 0.7
     и с веростностью 0.3 с фирмой из другой группы
     """
-    
+
     faker = Faker()
     inns = [faker.unique.random_int(1000000000, 9999999999) for _ in range(num_inns)]
     inn2group = {inn: random.randint(1, num_groups) for inn in inns}
-    group2name = {group_num: faker.unique.word() for group_num in range(1, num_groups + 1)}
+    group2name = {
+        group_num: faker.unique.word() for group_num in range(1, num_groups + 1)
+    }
 
     transactions = []
     for i in range(num_transactions):
         group = random.randint(1, num_groups)
         cross_group = random.random() < outer_prob
-        
+
         # если с фирмой из другой группы
         if cross_group:
             kt_group = random.randint(1, num_groups)
             while kt_group == group:
                 kt_group = random.randint(1, num_groups)
-            inn_kt = random.choice([inn for inn, g in inn2group.items() if g == kt_group])
+            inn_kt = random.choice(
+                [inn for inn, g in inn2group.items() if g == kt_group]
+            )
         # иначе с фирммой из нашей группы
         else:
             inn_kt = random.choice([inn for inn, g in inn2group.items() if g == group])
@@ -142,8 +164,16 @@ def make_interactions_dataset(
         while inn_dt == inn_kt:
             inn_dt = random.choice([inn for inn, g in inn2group.items() if g == group])
 
-        raw_word = random.choice([None, "word1", "word2", "word3", "word4"]) if random.random() > raw_word_null_prob else None
-        word = None if raw_word is None or random.random() < word_null_prob else f"clean_{raw_word[-1]}"
+        raw_word = (
+            random.choice([None, "word1", "word2", "word3", "word4"])
+            if random.random() > raw_word_null_prob
+            else None
+        )
+        word = (
+            None
+            if raw_word is None or random.random() < word_null_prob
+            else f"clean_{raw_word[-1]}"
+        )
 
         transaction = {
             "id_trans": i + 1,
@@ -151,8 +181,7 @@ def make_interactions_dataset(
             "inn_dt": inn_dt,
             "c_sum": round(random.uniform(10000, 250000), 2),
             "date": faker.date_between(
-                start_date=datetime(2021, 1, 1),
-                end_date=datetime(2023, 12, 31)
+                start_date=datetime(2021, 1, 1), end_date=datetime(2023, 12, 31)
             ),
             # пусть назн не важен, пока пох
             "nazn": random.choice(goods),
@@ -165,27 +194,25 @@ def make_interactions_dataset(
         }
         transactions.append(transaction)
 
-
     return pd.DataFrame(transactions), inns, inn2group, group2name
 
 
 def generate_feature_list(dataframe, features_name):
     """
-    Generate features list for mapping 
+    Generate features list for mapping
 
     Parameters
     ----------
-    dataframe: Dataframe 
+    dataframe: Dataframe
     features_name : List
-        List of feature columns name avaiable in dataframe. 
-        
+        List of feature columns name avaiable in dataframe.
+
     Returns
     -------
-    List of all features for mapping 
+    List of all features for mapping
     """
-    features = dataframe[features_name].apply(
-        lambda x: ','.join(x.map(str)), axis=1)
-    features = features.str.split(',')
+    features = dataframe[features_name].apply(lambda x: ",".join(x.map(str)), axis=1)
+    features = features.str.split(",")
     features = features.apply(pd.Series).stack().reset_index(drop=True)
     return features
 
@@ -217,8 +244,7 @@ def create_features(dataframe, features_name, id_col_name):
         Ex. -> (1, ['military', 'army', '5'])
     """
 
-    features = dataframe[features_name].apply(
-        lambda x: ','.join(x.map(str)), axis=1)
-    features = features.str.split(',')
+    features = dataframe[features_name].apply(lambda x: ",".join(x.map(str)), axis=1)
+    features = features.str.split(",")
     features = list(zip(dataframe[id_col_name], features))
     return features

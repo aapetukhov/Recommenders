@@ -8,3 +8,4 @@ numpy
 faker
 ace_tools
 lightfm
+pre-commit
