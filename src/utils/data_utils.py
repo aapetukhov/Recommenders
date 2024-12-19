@@ -12,6 +12,10 @@ import pandas as pd
 from faker import Faker
 from scipy.sparse import csr_matrix, dok_matrix
 
+from pyspark.sql import DataFrame
+from pyspark.sql.functions import col, collect_list, explode
+
+
 GOODS = [
     "мясо",
     "просо",
@@ -102,6 +106,72 @@ class InteractionsDataset:
         Normalize rows so each row sums to 1.
         Like in LightFM.
         """
+        row_sums = self.sparse_matrix.sum(axis=1)
+        row_indices, col_indices = self.sparse_matrix.nonzero()
+
+        for i, j in zip(row_indices, col_indices):
+            if row_sums[i, 0] != 0:
+                self.sparse_matrix[i, j] /= row_sums[i, 0]
+
+    def get_inn_from_id(self, id_: int) -> int:
+        return self.id2inn.get(id_)
+
+    def get_id_from_inn(self, inn: int) -> int:
+        return self.inn2id.get(inn)
+
+    def get_sparse_matrix(self) -> csr_matrix:
+        return self.sparse_matrix
+
+
+class InteractionsDatasetPySpark:
+    def __init__(
+        self,
+        interactions: DataFrame,
+        inn_kt_col_name: str = "inn_kt",
+        inn_dt_col_name: str = "inn_dt",
+        normalize_rows: bool = True,
+    ):
+        self.inn2id = {}
+        self.id2inn = {}
+        self.inn_kt_col_name = inn_kt_col_name
+        self.inn_dt_col_name = inn_dt_col_name
+
+        all_inns = (interactions
+                    .select(inn_kt_col_name)
+                    .union(interactions.select(inn_dt_col_name))
+                    .distinct()
+                    .rdd.flatMap(lambda x: x)
+                    .collect())
+
+        for idx, inn in enumerate(all_inns):
+            self.inn2id[inn] = idx
+            self.id2inn[idx] = inn
+
+        self.num_inns = len(self.inn2id)
+        self.interaction_sets = defaultdict(set)
+
+        self.sparse_matrix = self._build_sparse_matrix(interactions)
+
+        if normalize_rows:
+            self.normalize_rows()
+
+    def _build_sparse_matrix(self, interactions: DataFrame) -> csr_matrix:
+        sparse_matrix = dok_matrix((self.num_inns, self.num_inns), dtype=np.float32)
+
+        interactions_rdd = (interactions
+                            .select(self.inn_kt_col_name, self.inn_dt_col_name)
+                            .rdd.map(lambda row: (row[self.inn_kt_col_name], row[self.inn_dt_col_name])))
+
+        for inn_kt, inn_dt in interactions_rdd.collect():
+            id_kt = self.inn2id[inn_kt]
+            id_dt = self.inn2id[inn_dt]
+
+            self.interaction_sets[inn_kt].add(inn_dt)
+            sparse_matrix[id_kt, id_dt] += 1
+
+        return sparse_matrix.tocsr()
+
+    def normalize_rows(self):
         row_sums = self.sparse_matrix.sum(axis=1)
         row_indices, col_indices = self.sparse_matrix.nonzero()
 
