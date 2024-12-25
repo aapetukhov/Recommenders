@@ -13,7 +13,11 @@ from faker import Faker
 from scipy.sparse import csr_matrix, dok_matrix
 
 from pyspark.sql import DataFrame
-from pyspark.sql.functions import col, collect_list, explode
+from pyspark.sql import functions as sf
+from pyspark.sql.window import Window
+from pyspark.ml.feature import Bucketizer, QuantileDiscretizer, VectorAssembler
+from pyspark.ml.clustering import KMeans
+from pyspark.ml import Pipeline
 
 
 GOODS = [
@@ -318,3 +322,55 @@ def create_features(dataframe, features_name, id_col_name):
     features = features.str.split(",")
     features = list(zip(dataframe[id_col_name], features))
     return features
+
+
+def add_categorized_features(dataframe: DataFrame, num_buckets=5, binning_method="quantile"):
+    kt_window = Window.partitionBy("inn_kt")
+    dt_window = Window.partitionBy("inn_dt")
+
+    # в роли kt
+    dataframe = dataframe.withColumn("kt_total_sum", sf.sum("c_sum").over(kt_window))
+    dataframe = dataframe.withColumn("kt_avg_sum", sf.avg("c_sum").over(kt_window))
+    dataframe = dataframe.withColumn("kt_min_sum", sf.min("c_sum").over(kt_window))
+    dataframe = dataframe.withColumn("kt_max_sum", sf.max("c_sum").over(kt_window))
+    dataframe = dataframe.withColumn("kt_stddev_sum", sf.stddev("c_sum").over(kt_window))
+
+    # в роли dt
+    dataframe = dataframe.withColumn("dt_total_sum", sf.sum("c_sum").over(dt_window))
+    dataframe = dataframe.withColumn("dt_avg_sum", sf.avg("c_sum").over(dt_window))
+    dataframe = dataframe.withColumn("dt_min_sum", sf.min("c_sum").over(dt_window))
+    dataframe = dataframe.withColumn("dt_max_sum", sf.max("c_sum").over(dt_window))
+    dataframe = dataframe.withColumn("dt_stddev_sum", sf.stddev("c_sum").over(dt_window))
+
+    def categorize_column(df: DataFrame, col, method, num_buckets):
+        bin_col = col + "_category"
+
+        if method == "uniform":
+            splits = [float(i) / num_buckets for i in range(num_buckets + 1)]
+            splits = [float("-inf")] + [float("inf") * s for s in splits[1:]]
+            bucketizer = Bucketizer(splits=splits, inputCol=col, outputCol=bin_col)
+            df = bucketizer.transform(df)
+
+        elif method == "quantile":
+            discretizer = QuantileDiscretizer(
+                numBuckets=num_buckets, inputCol=col, outputCol=bin_col, handleInvalid="skip"
+            )
+            df = discretizer.fit(df).transform(df)
+
+        elif method == "kmeans":
+            assembler = VectorAssembler(inputCols=[col], outputCol=col + "_vec")
+            kmeans = KMeans(k=num_buckets, seed=42, featuresCol=col + "_vec", predictionCol=bin_col)
+            pipeline = Pipeline(stages=[assembler, kmeans])
+            df = pipeline.fit(df).transform(df)
+
+        else:
+            raise ValueError("INVALID. CHOOSE 'uniform', 'quantile', or 'kmeans'.")
+
+        return df
+
+
+    for col in ["kt_total_sum", "kt_avg_sum", "kt_min_sum", "kt_max_sum", "kt_stddev_sum", 
+                "dt_total_sum", "dt_avg_sum", "dt_min_sum", "dt_max_sum", "dt_stddev_sum"]:
+        dataframe = categorize_column(dataframe, col, binning_method, num_buckets)
+
+    return dataframe

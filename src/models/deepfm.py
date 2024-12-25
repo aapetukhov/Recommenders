@@ -46,7 +46,15 @@ class DeepFM(nn.Module):
         dt_features: torch.Tensor,
         **batch,
     ) -> torch.Tensor:
-        embedded_kt = self.embeddings_kt(kt_features)
-        embedded_dt = self.embeddings_dt(dt_features)
+        kt_embeds = torch.stack([self.embeddings_kt[feat](kt_features[feat]) for feat in kt_features], dim=1)
+        dt_embeds = torch.stack([self.embeddings_dt[feat](dt_features[feat]) for feat in dt_features], dim=1)
 
-        pass 
+        kt_attn_output, _ = self.attention_kt(kt_embeds, kt_embeds, kt_embeds)
+        dt_attn_output, _ = self.attention_dt(dt_embeds, dt_embeds, dt_embeds)
+
+        kt_pooled = torch.softmax(self.weights_kt(kt_attn_output).squeeze(-1), dim=-1) @ kt_attn_output
+        dt_pooled = torch.softmax(self.weights_dt(dt_attn_output).squeeze(-1), dim=-1) @ dt_attn_output
+
+        e_user = kt_pooled
+        e_item = dt_pooled
+        return e_user, e_item
