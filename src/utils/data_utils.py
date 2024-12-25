@@ -10,15 +10,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from faker import Faker
-from scipy.sparse import csr_matrix, dok_matrix
-
+from pyspark.ml import Pipeline
+from pyspark.ml.clustering import KMeans
+from pyspark.ml.feature import Bucketizer, QuantileDiscretizer, VectorAssembler
 from pyspark.sql import DataFrame
 from pyspark.sql import functions as sf
 from pyspark.sql.window import Window
-from pyspark.ml.feature import Bucketizer, QuantileDiscretizer, VectorAssembler
-from pyspark.ml.clustering import KMeans
-from pyspark.ml import Pipeline
-
+from scipy.sparse import csr_matrix, dok_matrix
 
 GOODS = [
     "мясо",
@@ -140,12 +138,13 @@ class InteractionsDatasetPySpark:
         self.inn_kt_col_name = inn_kt_col_name
         self.inn_dt_col_name = inn_dt_col_name
 
-        all_inns = (interactions
-                    .select(inn_kt_col_name)
-                    .union(interactions.select(inn_dt_col_name))
-                    .distinct()
-                    .rdd.flatMap(lambda x: x)
-                    .collect())
+        all_inns = (
+            interactions.select(inn_kt_col_name)
+            .union(interactions.select(inn_dt_col_name))
+            .distinct()
+            .rdd.flatMap(lambda x: x)
+            .collect()
+        )
 
         for idx, inn in enumerate(all_inns):
             self.inn2id[inn] = idx
@@ -162,9 +161,9 @@ class InteractionsDatasetPySpark:
     def _build_sparse_matrix(self, interactions: DataFrame) -> csr_matrix:
         sparse_matrix = dok_matrix((self.num_inns, self.num_inns), dtype=np.float32)
 
-        interactions_rdd = (interactions
-                            .select(self.inn_kt_col_name, self.inn_dt_col_name)
-                            .rdd.map(lambda row: (row[self.inn_kt_col_name], row[self.inn_dt_col_name])))
+        interactions_rdd = interactions.select(
+            self.inn_kt_col_name, self.inn_dt_col_name
+        ).rdd.map(lambda row: (row[self.inn_kt_col_name], row[self.inn_dt_col_name]))
 
         for inn_kt, inn_dt in interactions_rdd.collect():
             id_kt = self.inn2id[inn_kt]
@@ -291,6 +290,7 @@ def generate_feature_list(dataframe, features_name):
     return features
 
 
+# TODO: refactor create_features to pyspark
 def create_features(dataframe, features_name, id_col_name):
     """
     Generate features that will be ready for feeding into lightfm
@@ -324,7 +324,9 @@ def create_features(dataframe, features_name, id_col_name):
     return features
 
 
-def add_categorized_features(dataframe: DataFrame, num_buckets=5, binning_method="quantile"):
+def add_categorized_features(
+    dataframe: DataFrame, num_buckets=5, binning_method="quantile"
+):
     kt_window = Window.partitionBy("inn_kt")
     dt_window = Window.partitionBy("inn_dt")
 
@@ -333,14 +335,18 @@ def add_categorized_features(dataframe: DataFrame, num_buckets=5, binning_method
     dataframe = dataframe.withColumn("kt_avg_sum", sf.avg("c_sum").over(kt_window))
     dataframe = dataframe.withColumn("kt_min_sum", sf.min("c_sum").over(kt_window))
     dataframe = dataframe.withColumn("kt_max_sum", sf.max("c_sum").over(kt_window))
-    dataframe = dataframe.withColumn("kt_stddev_sum", sf.stddev("c_sum").over(kt_window))
+    dataframe = dataframe.withColumn(
+        "kt_stddev_sum", sf.stddev("c_sum").over(kt_window)
+    )
 
     # в роли dt
     dataframe = dataframe.withColumn("dt_total_sum", sf.sum("c_sum").over(dt_window))
     dataframe = dataframe.withColumn("dt_avg_sum", sf.avg("c_sum").over(dt_window))
     dataframe = dataframe.withColumn("dt_min_sum", sf.min("c_sum").over(dt_window))
     dataframe = dataframe.withColumn("dt_max_sum", sf.max("c_sum").over(dt_window))
-    dataframe = dataframe.withColumn("dt_stddev_sum", sf.stddev("c_sum").over(dt_window))
+    dataframe = dataframe.withColumn(
+        "dt_stddev_sum", sf.stddev("c_sum").over(dt_window)
+    )
 
     def categorize_column(df: DataFrame, col, method, num_buckets):
         bin_col = col + "_category"
@@ -353,13 +359,18 @@ def add_categorized_features(dataframe: DataFrame, num_buckets=5, binning_method
 
         elif method == "quantile":
             discretizer = QuantileDiscretizer(
-                numBuckets=num_buckets, inputCol=col, outputCol=bin_col, handleInvalid="skip"
+                numBuckets=num_buckets,
+                inputCol=col,
+                outputCol=bin_col,
+                handleInvalid="skip",
             )
             df = discretizer.fit(df).transform(df)
 
         elif method == "kmeans":
             assembler = VectorAssembler(inputCols=[col], outputCol=col + "_vec")
-            kmeans = KMeans(k=num_buckets, seed=42, featuresCol=col + "_vec", predictionCol=bin_col)
+            kmeans = KMeans(
+                k=num_buckets, seed=42, featuresCol=col + "_vec", predictionCol=bin_col
+            )
             pipeline = Pipeline(stages=[assembler, kmeans])
             df = pipeline.fit(df).transform(df)
 
@@ -368,9 +379,18 @@ def add_categorized_features(dataframe: DataFrame, num_buckets=5, binning_method
 
         return df
 
-
-    for col in ["kt_total_sum", "kt_avg_sum", "kt_min_sum", "kt_max_sum", "kt_stddev_sum", 
-                "dt_total_sum", "dt_avg_sum", "dt_min_sum", "dt_max_sum", "dt_stddev_sum"]:
+    for col in [
+        "kt_total_sum",
+        "kt_avg_sum",
+        "kt_min_sum",
+        "kt_max_sum",
+        "kt_stddev_sum",
+        "dt_total_sum",
+        "dt_avg_sum",
+        "dt_min_sum",
+        "dt_max_sum",
+        "dt_stddev_sum",
+    ]:
         dataframe = categorize_column(dataframe, col, binning_method, num_buckets)
 
     return dataframe

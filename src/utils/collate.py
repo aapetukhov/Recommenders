@@ -19,9 +19,13 @@ def collate_fn(dataset_items: list[dict[str, dict]]):
     dt_features = {}
 
     for feature_name in kt_features_names:
-        kt_features[feature_name] = [item["kt_features"][feature_name] for item in dataset_items]
+        kt_features[feature_name] = [
+            item["kt_features"][feature_name] for item in dataset_items
+        ]
     for feature_name in dt_features_names:
-        dt_features[feature_name] = [item["dt_features"][feature_name] for item in dataset_items]
+        dt_features[feature_name] = [
+            item["dt_features"][feature_name] for item in dataset_items
+        ]
 
     return {
         "kt_features": kt_features,
