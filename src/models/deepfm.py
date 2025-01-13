@@ -2,64 +2,56 @@ import torch
 import torch.nn as nn
 
 
+class EmbeddingLayer(nn.Module):
+    def __init__(self, num_features, embed_dim):
+        super(EmbeddingLayer, self).__init__()
+        self.embeddings = nn.ModuleList([
+            nn.Embedding(num_embeddings=f_size, embedding_dim=embed_dim)
+            for f_size in num_features
+        ])
+        self.embed_dim = embed_dim
+
+    def forward(self, x):
+        embedded = [emb(x[:, i]) for i, emb in enumerate(self.embeddings)]
+        return torch.stack(embedded, dim=1)  # (bs, n, d)
+
+
+class AttentionLayer(nn.Module):
+    def __init__(self, embed_dim):
+        super(AttentionLayer, self).__init__()
+        self.W_Q = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.W_K = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.W_V = nn.Linear(embed_dim, embed_dim, bias=False)
+        self.w = nn.Parameter(torch.randn(embed_dim))
+        self.softmax = nn.Softmax(dim=-1)
+
+    def forward(self, x):
+        Q = self.W_Q(x)  # (bs, n, d)
+        K = self.W_K(x)  # (bs, n, d)
+        V = self.W_V(x)  # (bs, n, d)
+
+        attention_scores = torch.matmul(Q, K.transpose(-1, -2)) / (self.W_Q.out_features ** 0.5)  # (bs, n, n)
+        attention_weights = self.softmax(attention_scores)  # (bs, n, n)
+        Z = torch.matmul(attention_weights, V)  # (bs, n, d)
+
+        u_weights = self.softmax(torch.matmul(Z, self.w)).unsqueeze(-1)  # (bs, n, 1)
+        u = (u_weights * Z).sum(dim=1)  # (bs, d)
+        return u
+
+
 class DeepFM(nn.Module):
-    def __init__(
-        self,
-        embedding_dim: int = 2,
-        num_heads: int = 1,
-        kt_features: dict = None,
-        dt_features: dict = None,
-    ):
-        super().__init__()
-        assert (
-            embedding_dim % num_heads == 0
-        ), f"embedding_dim must be divisible by num_heads,\ngot embed dim={embedding_dim} and num_heads={num_heads}"
+    def __init__(self, num_features_kt, num_features_dt, embed_dim):
+        super(DeepFM, self).__init__()
+        self.kt_feats = EmbeddingLayer(num_features_kt, embed_dim)
+        self.dt_feats = EmbeddingLayer(num_features_dt, embed_dim)
+        self.kt_embed = AttentionLayer(embed_dim)
+        self.dt_embed = AttentionLayer(embed_dim)
 
-        self.embeddings_kt = nn.ModuleDict(
-            {
-                feat: nn.Embedding(num_categories, embedding_dim)
-                for feat, num_categories in kt_features.items()
-            }
-        )
-        self.embeddings_dt = nn.ModuleDict(
-            {
-                feat: nn.Embedding(num_categories, embedding_dim)
-                for feat, num_categories in dt_features.items()
-            }
-        )
+    def forward(self, x_kt, x_dt):
+        embed_kt = self.kt_feats(x_kt)  # (bs, n, d)
+        u_kt = self.kt_embed(embed_kt)  # (bs, d)
 
-        # separate networks for kt and dt
-        self.attention_kt = nn.MultiheadAttention(embedding_dim, num_heads)
-        self.attention_dt = nn.MultiheadAttention(embedding_dim, num_heads)
+        embed_dt = self.dt_feats(x_dt)  # (bs, n, d)
+        u_dt = self.dt_embed(embed_dt)  # (bs, d)
 
-        self.weights_kt = nn.Linear(in_features=embedding_dim, out_features=1)
-        self.weights_dt = nn.Linear(in_features=embedding_dim, out_features=1)
-
-    def forward(
-        self,
-        kt_features: torch.Tensor,
-        dt_features: torch.Tensor,
-        **batch,
-    ) -> torch.Tensor:
-        kt_embeds = torch.stack(
-            [self.embeddings_kt[feat](kt_features[feat]) for feat in kt_features], dim=1
-        )
-        dt_embeds = torch.stack(
-            [self.embeddings_dt[feat](dt_features[feat]) for feat in dt_features], dim=1
-        )
-
-        kt_attn_output, _ = self.attention_kt(kt_embeds, kt_embeds, kt_embeds)
-        dt_attn_output, _ = self.attention_dt(dt_embeds, dt_embeds, dt_embeds)
-
-        kt_pooled = (
-            torch.softmax(self.weights_kt(kt_attn_output).squeeze(-1), dim=-1)
-            @ kt_attn_output
-        )
-        dt_pooled = (
-            torch.softmax(self.weights_dt(dt_attn_output).squeeze(-1), dim=-1)
-            @ dt_attn_output
-        )
-
-        e_user = kt_pooled
-        e_item = dt_pooled
-        return e_user, e_item
+        return u_kt, u_dt
