@@ -3,3 +3,6 @@ lightfm-hybrid-recommendation-system.ipynb
 
 #cache
 __pycache__
+
+# ds store
+.DS_Store
