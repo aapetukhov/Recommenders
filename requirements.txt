@@ -1,13 +1,18 @@
-ipykernel
-ipywidgets
+torch==2.2.0
+torchvision==0.17.0
+torchmetrics
+torchaudio==2.2.0
+numpy==1.26.4
 tqdm
-setuptools<60
-wheel<0.37
+matplotlib
 pandas
-numpy
-faker
-ace_tools
-lightfm
-pytorch
+wandb
+hydra-core
+einops
+sru
 
+black
+isort
 pre-commit
+opencv-python
+gdown
