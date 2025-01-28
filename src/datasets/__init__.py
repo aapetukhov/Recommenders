@@ -1,5 +1,4 @@
 from src.datasets.example import ExampleDataset
-from src.datasets.ss_dataset import SSDataset
-from src.datasets.ss_dataset_kaggle import SSDatasetKaggle
+from src.datasets.retail_dataset import RetailDataset
 
-all = ["ExampleDataset", "SSDataset", "SSDatasetKaggle"]
+all = ["ExampleDataset"]

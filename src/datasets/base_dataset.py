@@ -6,7 +6,6 @@ import numpy as np
 import torch
 import torchaudio
 from torch.utils.data import Dataset
-from src.encoders.stft import BaseEncoder
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +24,6 @@ class BaseDataset(Dataset):
         index,
         limit=None,
         target_sr=16000,
-        encoder: BaseEncoder = None,
         shuffle_index=False,
         instance_transforms=None,
     ):
