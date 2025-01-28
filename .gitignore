@@ -126,5 +126,7 @@ __MACOSX/
 # pth models
 *.pth
 
-# test files
-test_rtfs.py
+# data
+test_dataset.csv
+train_dataset.csv
+category_maps.json
