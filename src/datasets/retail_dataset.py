@@ -4,7 +4,7 @@ import pandas as pd
 from torch.utils.data import IterableDataset
 
 
-class RetailDataset(IterableDataset):
+class StreamRetailDataset(IterableDataset):
     def __init__(self, file_path, dt_features, kt_features, chunk_size=10000, **kwargs):
         self.file_path = file_path
         self.chunk_size = chunk_size
