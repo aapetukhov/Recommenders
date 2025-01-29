@@ -63,3 +63,18 @@ class RecommenderModel(nn.Module):
         u_dt = self.item_attention(item_emb)  # (batch_size, d)
 
         return (u_kt * u_dt).sum(dim=1)
+    
+    def __str__(self):
+        """
+        Model info with the number of parameters.
+        """
+        all_parameters = sum([p.numel() for p in self.parameters()])
+        trainable_parameters = sum(
+            [p.numel() for p in self.parameters() if p.requires_grad]
+        )
+
+        result_info = super().__str__()
+        result_info = result_info + f"\nAll params: {all_parameters}"
+        result_info = result_info + f"\nTrainable params: {trainable_parameters}"
+
+        return result_info
