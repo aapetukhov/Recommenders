@@ -1,4 +1,4 @@
-from src.datasets.example import ExampleDataset
-from src.datasets.retail_dataset import StreamRetailDataset
+from .example import ExampleDataset
+from .retail_dataset import StreamRetailDataset
 
 all = ["ExampleDataset", "StreamRetailDataset"]

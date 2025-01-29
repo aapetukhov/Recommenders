@@ -130,3 +130,6 @@ __MACOSX/
 test_dataset.csv
 train_dataset.csv
 category_maps.json
+
+# legacy models
+ease.py
