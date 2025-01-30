@@ -41,15 +41,20 @@ class FeatureEmbedding(nn.Module):
             feat_name: nn.Embedding(num_embeddings=size, embedding_dim=embed_dim)
             for feat_name, size in feature_sizes.items()
         })
+        self.feature_names = list(feature_sizes.keys())
 
-    def forward(self, x, feat_names):
-        embedded = [self.embeddings[feat_name](x[:, i]) for i, feat_name in enumerate(feat_names)]
+    def forward(self, x):
+        embedded = [self.embeddings[feat_name](x[:, i]) for i, feat_name in enumerate(self.feature_names)]
         return torch.stack(embedded, dim=1)  # (batch_size, num_features, embed_dim)
 
 
-class RecommenderModel(nn.Module):
+class DeepFM(nn.Module):
+    """
+    Main model class
+    """
+    
     def __init__(self, user_feature_sizes, item_feature_sizes, embed_dim):
-        super(RecommenderModel, self).__init__()
+        super(DeepFM, self).__init__()
         self.user_embed = FeatureEmbedding(user_feature_sizes, embed_dim)
         self.item_embed = FeatureEmbedding(item_feature_sizes, embed_dim)
         self.user_attention = AttentionLayer(embed_dim)

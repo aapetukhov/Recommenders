@@ -1,2 +1,3 @@
-from src.models.deepfm import DeepFM
-from src.models.ease import EASE
+from .deepfm import AttentionLayer, FeatureEmbedding, DeepFM
+
+all = ["DeepFM"]
