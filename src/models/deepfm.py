@@ -67,7 +67,7 @@ class DeepFM(nn.Module):
         u_kt = self.user_attention(user_emb)  # (batch_size, d)
         u_dt = self.item_attention(item_emb)  # (batch_size, d)
 
-        return (u_kt * u_dt).sum(dim=1)
+        return {"logits": (u_kt * u_dt).sum(dim=1)}
     
     def __str__(self):
         """
