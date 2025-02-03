@@ -12,7 +12,7 @@ from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 warnings.filterwarnings("ignore", category=UserWarning)
 
 
-@hydra.main(version_base=None, config_path="src/configs", config_name="baseline")
+@hydra.main(version_base=None, config_path="src/configs", config_name="test")
 def main(config):
     """
     Main script for training. Instantiates the model, optimizer, scheduler,
@@ -20,7 +20,7 @@ def main(config):
     evaluate the model.
 
     Args:
-        config (DictConfig): hydra experiment config.
+        config (DictConfig): hydra experiment config in the right format.
     """
     set_random_seed(config.trainer.seed)
 
@@ -30,7 +30,7 @@ def main(config):
 
     if config.trainer.device == "auto":
         device = "cuda" if torch.cuda.is_available() else "cpu"
-        writer.info(f"\nUsing device: {device}\n")
+        logger.info(f"\nUsing device: {device}\n")
     else:
         device = config.trainer.device
 

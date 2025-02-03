@@ -62,31 +62,22 @@ def get_dataloaders(config, device):
     batch_transforms = instantiate(config.transforms.batch_transforms)
     move_batch_transforms_to_device(batch_transforms, device)
 
-    # init encoder if present in config
-    if "encoder" in config:
-        encoder = instantiate(config.encoder)
-    else:
-        encoder = None
-
     # dataset partitions init
-    datasets = instantiate(config.datasets, encoder=encoder)  # instance transforms are defined inside
+    datasets = instantiate(config.datasets)  # instance transforms are defined inside
 
     # dataloaders init
     dataloaders = {}
     for dataset_partition in config.datasets.keys():
         dataset = datasets[dataset_partition]
 
-        assert config.dataloader.batch_size <= len(dataset), (
-            f"The batch size ({config.dataloader.batch_size}) cannot "
-            f"be larger than the dataset length ({len(dataset)})"
-        )
-
+        # TODO: change set_worker_seed
+        # TODO: initialise collate_fn properly
         partition_dataloader = instantiate(
             config.dataloader,
             dataset=dataset,
-            collate_fn=collate_fn,
             drop_last=(dataset_partition == "train"),
-            shuffle=(dataset_partition == "train"),
+            # shuffle=(dataset_partition == "train"), 
+            # not specifying shuffle because it's an iterable dataset
             worker_init_fn=set_worker_seed,
         )
         dataloaders[dataset_partition] = partition_dataloader

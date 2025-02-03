@@ -5,7 +5,18 @@ from torch.utils.data import IterableDataset
 
 
 class StreamRetailDataset(IterableDataset):
-    def __init__(self, file_path, dt_features, kt_features, label_column="label", chunk_size=10000):
+    """
+    Streamable Retail Dataset.
+    Allows for huuuge data processing without putting it on disk.
+    """
+    def __init__(
+        self,
+        file_path: str,
+        dt_features: list,
+        kt_features: list,
+        label_column="label",
+        chunk_size=10000
+    ):
         self.file_path = file_path
         self.chunk_size = chunk_size
         self.dt_features = dt_features

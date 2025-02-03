@@ -13,5 +13,7 @@ def collate_fn(dataset_items: list[dict]):
         result_batch (dict[Union[Tensor, List]]): dict, containing batch-version
             of the tensors or lists.
     """
-    # TODO: implement
+    # TODO: implement for case with continuous features and for messages
+    # for example so that we can collate the feature "message":
+    # [1, 2, 3, 4] -> [1, 2, 3, 4, 0, ..., 0]
     return

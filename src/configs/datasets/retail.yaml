@@ -1,0 +1,31 @@
+train:
+  _target_: src.datasets.StreamRetailDataset
+  file_path: /Users/andreypetukhov/Documents/work-related/LightFM/data/train_dataset.csv
+  # passed as list
+  dt_features:
+    - "user_inn_dt_id"
+    - "user_total_views_id"
+    - "user_unique_items_id"
+    - "user_total_transactions_id"
+  kt_features:
+    - "item_inn_kt_id"
+    - "item_categoryid_id"
+    - "item_available_id"
+  label_column: "label"
+  chunk_size: 10000
+
+val:
+  _target_: src.datasets.LibrispeechDatasetKaggle
+  file_path: "/Users/andreypetukhov/Documents/work-related/LightFM/data/test_dataset.csv"
+  dt_features:
+    - "user_inn_dt_id"
+    - "user_total_views_id"
+    - "user_unique_items_id"
+    - "user_total_transactions_id"
+  kt_features:
+    - "item_inn_kt_id"
+    - "item_categoryid_id"
+    - "item_available_id"
+  label_column: "label"
+  label_column: "label"
+  chunk_size: 10000
