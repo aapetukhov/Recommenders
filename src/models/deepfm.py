@@ -60,9 +60,9 @@ class DeepFM(nn.Module):
         self.user_attention = AttentionLayer(embed_dim)
         self.item_attention = AttentionLayer(embed_dim)
 
-    def forward(self, user_feats, item_feats):
-        user_emb = self.user_embed(user_feats)  # (batch_size, n, d)
-        item_emb = self.item_embed(item_feats)  # (batch_size, m, d)
+    def forward(self, user, item):
+        user_emb = self.user_embed(user)  # (batch_size, n, d)
+        item_emb = self.item_embed(item)  # (batch_size, m, d)
 
         u_kt = self.user_attention(user_emb)  # (batch_size, d)
         u_dt = self.item_attention(item_emb)  # (batch_size, d)

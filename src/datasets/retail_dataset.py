@@ -30,12 +30,15 @@ class StreamRetailDataset(IterableDataset):
         items = chunk[self.kt_features].values
         labels = chunk[self.label_column].values.astype(np.float32)
 
+        # TODO: make batches dict-based
+        # its tuple-based now
+        
         for user, item, label in zip(users, items, labels):
-            yield (
-                torch.tensor(user, dtype=torch.long), # TODO: fix when there are float features
-                torch.tensor(item, dtype=torch.long), # TODO: fix when there are float features
-                torch.tensor(label, dtype=torch.float32), # for BCE loss
-            )
+            yield {
+                "user": torch.tensor(user, dtype=torch.long), # TODO: fix when there are float features
+                "item": torch.tensor(item, dtype=torch.long), # TODO: fix when there are float features
+                "label": torch.tensor(label, dtype=torch.float32), # for BCE loss
+            }
 
     def __iter__(self):
         for chunk in pd.read_csv(self.file_path, chunksize=self.chunk_size):

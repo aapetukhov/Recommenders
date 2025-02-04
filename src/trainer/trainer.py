@@ -10,7 +10,7 @@ class Trainer(BaseTrainer):
     Trainer class. Defines the logic of batch logging and processing.
     """
 
-    def process_batch(self, batch, metrics: MetricTracker):
+    def process_batch(self, batch: dict, metrics: MetricTracker):
         """
         Run batch through the model, compute metrics, compute loss,
         and do training step (during training stage).
@@ -58,6 +58,7 @@ class Trainer(BaseTrainer):
             metrics.update(met.name, met(**batch))
         return batch
 
+    # TODO: add attention logging and weights for features
     def _log_batch(self, batch_idx, batch, mode="train"):
         """
         Log data from batch. Calls self.writer.add_* to log data
@@ -71,10 +72,19 @@ class Trainer(BaseTrainer):
                 rules to apply.
         """
         if mode == "train":
-            self.log_audio(mode="train", **batch)
+            self.log_attention_matrix(mode, **batch)
+            self.log_attention_weights(mode, **batch)
         else:
-            self.log_audio(mode="val", **batch)
-            # self.log_spectrogram(mode="val", **batch)
+            self.log_attention_matrix(mode, **batch)
+            self.log_attention_weights(mode, **batch)
+
+    def log_attention_matrix(self, mode, **batch):
+        # TODO: implement
+        pass
+
+    def log_attention_weights(self, mode, **batch):
+        # TODO: implement
+        pass
 
     def log_audio(self, mix, s1, s2, s1_pred, s2_pred, mode, **batch):
         audio_samples = {

@@ -5,10 +5,12 @@ import torch.nn as nn
 from numpy import inf
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
+from logging import Logger
 
 from src.datasets.data_utils import inf_loop
 from src.metrics.tracker import MetricTracker
 from src.utils.io_utils import ROOT_PATH
+from src.logger.wandb import WandBWriter
 
 
 class BaseTrainer:
@@ -65,13 +67,13 @@ class BaseTrainer:
 
         self.skip_oom = skip_oom
 
-        self.logger = logger
+        self.logger: Logger = logger
         self.log_step = config.trainer.get("log_step", 50)
 
         self.model: nn.Module = model
         self.criterion = criterion
-        self.optimizer = optimizer
-        self.lr_scheduler = lr_scheduler
+        self.optimizer: torch.optim.Optimizer = optimizer
+        self.lr_scheduler: torch.optim.lr_scheduler.LRScheduler = lr_scheduler
         self.batch_transforms = batch_transforms
 
         # define dataloaders
@@ -84,6 +86,7 @@ class BaseTrainer:
             # self.epoch_len = len(self.train_dataloader)
         else:
             # iteration-based training
+            # TODO: what to do with this?
             self.train_dataloader = inf_loop(self.train_dataloader)
             self.epoch_len = epoch_len
 
@@ -118,10 +121,11 @@ class BaseTrainer:
                 self.early_stop = inf
 
         # setup visualization writer instance
-        self.writer = writer
+        self.writer: WandBWriter = writer
 
         # define metrics
         self.metrics = metrics
+        # TODO: add proper metrics to track
         self.train_metrics = MetricTracker(
             *self.config.writer.loss_names,
             "grad_norm",
@@ -209,8 +213,14 @@ class BaseTrainer:
         self.train_metrics.reset()
         self.writer.set_step((epoch - 1) * self.epoch_len)
         self.writer.add_scalar("epoch", epoch)
+        # TODO: adapt for IterableDataset
+        # as it has no length
         for batch_idx, batch in enumerate(
-            tqdm(self.train_dataloader, desc="train", total=self.epoch_len)
+            tqdm(
+                self.train_dataloader,
+                desc="train",
+                total=self.epoch_len
+            )
         ):
             try:
                 batch = self.process_batch(
@@ -493,6 +503,7 @@ class BaseTrainer:
             self.logger.info("Saving current best: model_best.pth ...")
 
     def _resume_checkpoint(self, resume_path):
+        # TODO: rewrite for IterableDataset logic
         """
         Resume from a saved checkpoint (in case of server crash, etc.).
         The function loads state dicts for everything, including model,

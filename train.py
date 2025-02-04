@@ -40,6 +40,7 @@ def main(config):
     dataloaders, batch_transforms = get_dataloaders(config, device)
 
     # build model architecture, then print to console
+    # TODO: need to pass sizes when init
     model = instantiate(config.model).to(device)
     logger.info(model)
 
