@@ -1,6 +1,7 @@
 from abc import abstractmethod
 
 import torch
+import torch.nn as nn
 from numpy import inf
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
@@ -67,7 +68,7 @@ class BaseTrainer:
         self.logger = logger
         self.log_step = config.trainer.get("log_step", 50)
 
-        self.model = model
+        self.model: nn.Module = model
         self.criterion = criterion
         self.optimizer = optimizer
         self.lr_scheduler = lr_scheduler
@@ -77,7 +78,10 @@ class BaseTrainer:
         self.train_dataloader = dataloaders["train"]
         if epoch_len is None:
             # epoch-based training
-            self.epoch_len = len(self.train_dataloader)
+            raise ValueError(
+                "Epoch length must be specified"
+            )
+            # self.epoch_len = len(self.train_dataloader)
         else:
             # iteration-based training
             self.train_dataloader = inf_loop(self.train_dataloader)
@@ -136,18 +140,13 @@ class BaseTrainer:
             ROOT_PATH / config.trainer.save_dir / config.writer.run_name
         )
 
+        # TODO: figure out how to resume training
         if config.trainer.get("resume_from") is not None:
             resume_path = self.checkpoint_dir / config.trainer.resume_from
             self._resume_checkpoint(resume_path)
 
         if config.trainer.get("from_pretrained") is not None:
             self._from_pretrained(config.trainer.get("from_pretrained"))
-
-        # if config.trainer.get("stft") is not None:
-        #     self.n_fft = config.trainer.get("n_fft")
-        #     self.hop_length = config.trainer.get("hop_length")
-        #     self.window = torch.hann_window(config.trainer.get("n_fft")).to(device)
-        #     print(f"{'*'*35}\nWINDOW PUT ON DEVICE: {self.window.device}\n{'*'*35}")
 
     def train(self):
         """
@@ -183,6 +182,7 @@ class BaseTrainer:
 
             # evaluate model performance according to configured metric,
             # save best checkpoint as model_best
+            # TODO: review monitor_performance function code
             best, stop_process, not_improved_count = self._monitor_performance(
                 logs, not_improved_count
             )
