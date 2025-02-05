@@ -2,6 +2,7 @@ from abc import abstractmethod
 
 import torch
 import torch.nn as nn
+from torch.utils.data import IterableDataset
 from numpy import inf
 from torch.nn.utils import clip_grad_norm_
 from tqdm.auto import tqdm
@@ -79,11 +80,10 @@ class BaseTrainer:
         # define dataloaders
         self.train_dataloader = dataloaders["train"]
         if epoch_len is None:
-            # epoch-based training
-            raise ValueError(
-                "Epoch length must be specified"
-            )
-            # self.epoch_len = len(self.train_dataloader)
+            if isinstance(self.train_dataloader.dataset, IterableDataset):
+                self.epoch_len = self.count_batches(self.train_dataloader)
+            else:
+                self.epoch_len = len(self.train_dataloader)
         else:
             # iteration-based training
             # TODO: what to do with this?
@@ -219,7 +219,7 @@ class BaseTrainer:
             tqdm(
                 self.train_dataloader,
                 desc="train",
-                total=self.epoch_len
+                total=self.epoch_len,
             )
         ):
             try:
@@ -240,11 +240,8 @@ class BaseTrainer:
             # log current results
             if batch_idx % self.log_step == 0:
                 self.writer.set_step((epoch - 1) * self.epoch_len + batch_idx)
-                self.logger.debug(
-                    "Train Epoch: {} {} Loss: {:.6f}".format(
-                        epoch, self._progress(batch_idx), batch["loss"].item()
-                    )
-                )
+                self.logger.debug(f"Train Epoch: {epoch} Step: {batch_idx} Loss: {batch['loss'].item():.6f}")
+
                 self.writer.add_scalar(
                     "learning rate", self.lr_scheduler.get_last_lr()[0]
                 )
@@ -419,6 +416,17 @@ class BaseTrainer:
             norm_type,
         )
         return total_norm.item()
+    
+    def count_batches(self, dataloader, max_batches=20000):
+        """
+        Count the number of batches in dataset approximately
+        """
+        count = 0
+        for _ in dataloader:
+            count += 1
+            if count >= max_batches:
+                break
+        return count
 
     def _progress(self, batch_idx):
         """

@@ -16,4 +16,8 @@ def collate_fn(dataset_items: list[dict]):
     # TODO: implement for case with continuous features and for messages
     # for example so that we can collate the feature "message":
     # [1, 2, 3, 4] -> [1, 2, 3, 4, 0, ..., 0]
-    return
+    users = torch.stack([sample["user"] for sample in dataset_items])
+    items = torch.stack([sample["item"] for sample in dataset_items])
+    labels = torch.stack([sample["label"] for sample in dataset_items])
+    
+    return {"user": users, "item": items, "label": labels}

@@ -5,6 +5,7 @@ import pandas as pd
 import torch
 
 
+# TODO: rewrite a similar for tensorboard
 class WandBWriter:
     """
     Class for experiment tracking via WandB.

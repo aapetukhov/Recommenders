@@ -8,7 +8,8 @@ class AttentionLayer(nn.Module):
         self.W_Q = nn.Linear(embed_dim, embed_dim, bias=False)
         self.W_K = nn.Linear(embed_dim, embed_dim, bias=False)
         self.W_V = nn.Linear(embed_dim, embed_dim, bias=False)
-        self.w = nn.Parameter(torch.randn(embed_dim))
+        # self.w = nn.Parameter(torch.randn(embed_dim))
+        self.W_u = nn.Linear(embed_dim, 1, bias=False)
         self.softmax = nn.Softmax(dim=-1)
         self.norm = nn.LayerNorm(embed_dim)
         self.dropout = nn.Dropout(0.1)
@@ -22,10 +23,10 @@ class AttentionLayer(nn.Module):
         attention_weights = self.softmax(attention_scores)
         Z = torch.matmul(attention_weights, V)
 
-        u_weights = self.softmax(torch.matmul(Z, self.w)).unsqueeze(-1)
+        u_weights = self.softmax(self.W_u(Z)).unsqueeze(-1)
         u = (u_weights * Z).sum(dim=1)
 
-        return self.norm(u + torch.mean(x, dim=1))
+        return self.norm(u)
 
 
 class FeatureEmbedding(nn.Module):

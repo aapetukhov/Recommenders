@@ -117,16 +117,3 @@ class Trainer(BaseTrainer):
             # Log Stuff
             # TODO: add logging
             pass
-
-    # TODO: write and refactor so its only applied when working with voicefilter (otherwise there's no s{i}_spec_pred)
-    def log_spectrogram(
-        self,
-        mix_spectrogram,
-        s1_spec_true,
-        s2_spec_true,
-        s1_spec_pred,
-        s2_spec_pred,
-        mode,
-        **batch,
-    ):
-        pass
