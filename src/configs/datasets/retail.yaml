@@ -15,7 +15,7 @@ train:
   chunk_size: 5000
 
 val:
-  _target_: src.datasets.LibrispeechDatasetKaggle
+  _target_: src.datasets.StreamRetailDataset
   file_path: "/Users/andreypetukhov/Documents/work-related/LightFM/data/test_dataset.csv"
   dt_features:
     - "user_inn_dt_id"
@@ -26,6 +26,5 @@ val:
     - "item_inn_kt_id"
     - "item_categoryid_id"
     - "item_available_id"
-  label_column: "label"
   label_column: "label"
   chunk_size: 5000
