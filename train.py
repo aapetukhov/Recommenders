@@ -6,7 +6,7 @@ import json
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
-from src.datasets.data_utils import get_dataloaders
+from src.datasets.data_utils import get_dataloaders, compute_epoch_len
 from src.trainer import Trainer
 from src.utils.init_utils import set_random_seed, setup_saving_and_logging
 
@@ -43,15 +43,15 @@ def main(config):
     # build model architecture, then print to console
     # TODO: need to pass sizes when init
     with open("/Users/andreypetukhov/Documents/work-related/LightFM/data/user_feature_sizes.json", "r") as f:
-        config.feature_sizes.user = json.load(f)
+        user_feature_sizes = json.load(f)
 
     with open("/Users/andreypetukhov/Documents/work-related/LightFM/data/item_feature_sizes.json", "r") as f:
-        config.feature_sizes.item = json.load(f)
+        item_feature_sizes = json.load(f)
 
     model = instantiate(
         config.model,
-        user_feature_sizes=config.feature_sizes.user,
-        item_feature_sizes=config.feature_sizes.item
+        user_feature_sizes=user_feature_sizes,
+        item_feature_sizes=item_feature_sizes,
     ).to(device)
     logger.info(model)
 
@@ -59,14 +59,15 @@ def main(config):
     loss_function = instantiate(config.loss_function).to(device)
     metrics = instantiate(config.metrics)
 
-    # build optimizer, learning rate scheduler
+    # build optimizer
     trainable_params = filter(lambda p: p.requires_grad, model.parameters())
     optimizer = instantiate(config.optimizer, params=trainable_params)
-    lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer)
 
+    # build learning rate scheduler
     # epoch_len = number of iterations for iteration-based training
     # epoch_len = None or len(dataloader) for epoch-based training
-    epoch_len = config.trainer.get("epoch_len", None)
+    epoch_len = compute_epoch_len(dataloaders["train"])
+    lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer, steps_per_epoch=epoch_len)
 
     trainer = Trainer(
         model=model,
@@ -74,7 +75,7 @@ def main(config):
         metrics=metrics,
         optimizer=optimizer,
         lr_scheduler=lr_scheduler,
-        config=config,
+        config=config, # config is passed here!
         device=device,
         dataloaders=dataloaders,
         epoch_len=epoch_len,

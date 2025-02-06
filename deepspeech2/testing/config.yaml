@@ -8,7 +8,7 @@ writer:
   - loss
   log_checkpoints: false
   id_length: 8
-  run_id: dvbtx28o
+  run_id: h6ffrt3e
 metrics:
   train: []
   inference:
@@ -53,13 +53,8 @@ transforms:
   batch_transforms: {}
   instance_transforms: {}
 model:
-  _target_: src.model.DeepFM
-  embed_dim: 32
-  user_feature_sizes: ${feature_sizes.user}
-  item_feature_sizes: ${feature_sizes.item}
-feature_sizes:
-  user: ${oc.decode:${read_json:/Users/andreypetukhov/Documents/work-related/LightFM/data/user_feature_sizes.json}}
-  item: ${oc.decode:${read_json:/Users/andreypetukhov/Documents/work-related/LightFM/data/item_feature_sizes.json}}
+  _target_: src.models.DeepFM
+  embed_dim: 8
 optimizer:
   _target_: torch.optim.AdamW
   lr: 0.0003
@@ -67,18 +62,17 @@ lr_scheduler:
   _target_: torch.optim.lr_scheduler.OneCycleLR
   max_lr: 0.0005
   pct_start: 0.1
-  steps_per_epoch: ${trainer.epoch_len}
   epochs: ${trainer.n_epochs}
   anneal_strategy: cos
 loss_function:
   _target_: src.loss.LogitsBCELoss
 trainer:
-  log_step: 50
+  log_step: 2
   n_epochs: 20
-  epoch_len: null
   device_tensors:
+  - user
+  - item
   - label
-  - text_encoded
   resume_from: null
   device: auto
   override: true

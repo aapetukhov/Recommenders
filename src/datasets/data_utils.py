@@ -1,3 +1,4 @@
+import torch
 from itertools import repeat
 
 from hydra.utils import instantiate
@@ -84,3 +85,12 @@ def get_dataloaders(config, device):
         dataloaders[dataset_partition] = partition_dataloader
 
     return dataloaders, batch_transforms
+
+def compute_epoch_len(dataloader):
+    if isinstance(dataloader.dataset, torch.utils.data.IterableDataset):
+        length = sum(1 for _ in dataloader)
+        print(f"Length of the dataset (in batches): {length}")
+        return length
+    
+    print(f"Lenght of the dataset (in batches): {len(dataloader)}")
+    return len(dataloader)

@@ -7,7 +7,7 @@ defaults:
   - _self_
 
 model:
-  _target_: src.model.DeepFM
+  _target_: src.models.DeepFM
   embed_dim: 8
 
 optimizer:
@@ -18,7 +18,7 @@ lr_scheduler:
   _target_: torch.optim.lr_scheduler.OneCycleLR
   max_lr: 0.0005
   pct_start: 0.1
-  steps_per_epoch: ${trainer.epoch_len}
+  # steps_per_epoch: ${trainer.epoch_len}
   epochs: ${trainer.n_epochs}
   anneal_strategy: cos
 
@@ -26,10 +26,10 @@ loss_function:
   _target_: src.loss.LogitsBCELoss
 
 trainer:
-  log_step: 50
+  log_step: 2
   n_epochs: 20
-  epoch_len: null
-  device_tensors: ["label", "text_encoded"] # which tensors should be on device (ex. GPU)
+  # epoch_len: null
+  device_tensors: ["user", "item", "label"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name

@@ -1,3 +1,3 @@
-from .deepfm import AttentionLayer, DeepFM, FeatureEmbedding
+from src.models.deepfm import AttentionLayer, DeepFM, FeatureEmbedding
 
 all = ["DeepFM"]
