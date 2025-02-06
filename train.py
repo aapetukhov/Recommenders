@@ -2,6 +2,7 @@ import warnings
 
 import hydra
 import torch
+import json
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
@@ -41,7 +42,17 @@ def main(config):
 
     # build model architecture, then print to console
     # TODO: need to pass sizes when init
-    model = instantiate(config.model).to(device)
+    with open("/Users/andreypetukhov/Documents/work-related/LightFM/data/user_feature_sizes.json", "r") as f:
+        config.feature_sizes.user = json.load(f)
+
+    with open("/Users/andreypetukhov/Documents/work-related/LightFM/data/item_feature_sizes.json", "r") as f:
+        config.feature_sizes.item = json.load(f)
+
+    model = instantiate(
+        config.model,
+        user_feature_sizes=config.feature_sizes.user,
+        item_feature_sizes=config.feature_sizes.item
+    ).to(device)
     logger.info(model)
 
     # get function handles of loss and metrics

@@ -8,13 +8,7 @@ defaults:
 
 model:
   _target_: src.model.DeepFM
-  embed_dim: 32
-  user_feature_sizes: ${feature_sizes.user}
-  item_feature_sizes: ${feature_sizes.item}
-
-feature_sizes:
-  user: ${oc.decode:${read_json:/Users/andreypetukhov/Documents/work-related/LightFM/data/user_feature_sizes.json}}
-  item: ${oc.decode:${read_json:/Users/andreypetukhov/Documents/work-related/LightFM/data/item_feature_sizes.json}}
+  embed_dim: 8
 
 optimizer:
   _target_: torch.optim.AdamW
