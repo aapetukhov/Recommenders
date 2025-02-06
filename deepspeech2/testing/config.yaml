@@ -8,7 +8,7 @@ writer:
   - loss
   log_checkpoints: false
   id_length: 8
-  run_id: h6ffrt3e
+  run_id: e45wd0ob
 metrics:
   train: []
   inference:

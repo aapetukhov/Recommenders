@@ -11,7 +11,7 @@ class LogitsBCELoss(nn.Module):
         super().__init__()
         self.loss = nn.BCEWithLogitsLoss()
 
-    def forward(self, logits: torch.Tensor, labels: torch.Tensor, **batch):
+    def forward(self, logits: torch.Tensor, label: torch.Tensor, **batch):
         """
         Loss function calculation logic.
 
@@ -25,8 +25,8 @@ class LogitsBCELoss(nn.Module):
 
         Args:
             logits (Tensor): model output predictions.
-            labels (Tensor): ground-truth labels.
+            label (Tensor): ground-truth label.
         Returns:
             losses (dict): dict containing calculated loss functions.
         """
-        return {"loss": self.loss(logits, labels)}
+        return {"loss": self.loss(logits, label)}
