@@ -71,7 +71,6 @@ def get_dataloaders(config, device):
     for dataset_partition in config.datasets.keys():
         dataset = datasets[dataset_partition]
 
-        # TODO: change set_worker_seed
         # TODO: initialise collate_fn properly
         partition_dataloader = instantiate(
             config.dataloader,
