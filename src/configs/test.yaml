@@ -1,9 +1,9 @@
 defaults:
   - writer: wandb
   - metrics: default
-  - datasets: default
+  - datasets: retail
   - dataloader: default
-  - transforms: example_only_instance
+  - transforms: example
   - _self_
 
 model:
@@ -35,7 +35,7 @@ trainer:
   log_step: 50
   n_epochs: 20
   epoch_len: null
-  device_tensors: ["spectrogram", "text_encoded"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["labels", "text_encoded"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name
