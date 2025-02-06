@@ -1,17 +1,17 @@
 from abc import abstractmethod
+from logging import Logger
 
 import torch
 import torch.nn as nn
-from torch.utils.data import IterableDataset
 from numpy import inf
 from torch.nn.utils import clip_grad_norm_
+from torch.utils.data import IterableDataset
 from tqdm.auto import tqdm
-from logging import Logger
 
 from src.datasets.data_utils import inf_loop
+from src.logger.wandb import WandBWriter
 from src.metrics.tracker import MetricTracker
 from src.utils.io_utils import ROOT_PATH
-from src.logger.wandb import WandBWriter
 
 
 class BaseTrainer:
@@ -240,7 +240,9 @@ class BaseTrainer:
             # log current results
             if batch_idx % self.log_step == 0:
                 self.writer.set_step((epoch - 1) * self.epoch_len + batch_idx)
-                self.logger.debug(f"Train Epoch: {epoch} Step: {batch_idx} Loss: {batch['loss'].item():.6f}")
+                self.logger.debug(
+                    f"Train Epoch: {epoch} Step: {batch_idx} Loss: {batch['loss'].item():.6f}"
+                )
 
                 self.writer.add_scalar(
                     "learning rate", self.lr_scheduler.get_last_lr()[0]
@@ -297,13 +299,12 @@ class BaseTrainer:
 
     def process_batch(self, batch, metric):
         """Must be defined in in the nested class
-        
+
         Keyword arguments:
         batch -- dict-based batch
         metric -- MetricTracker
         """
         raise NotImplementedError()
-        
 
     def _monitor_performance(self, logs, not_improved_count):
         """
@@ -426,7 +427,7 @@ class BaseTrainer:
             norm_type,
         )
         return total_norm.item()
-    
+
     def count_batches(self, dataloader, max_batches=20000):
         """
         Count the number of batches in dataset approximately

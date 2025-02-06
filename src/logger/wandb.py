@@ -40,8 +40,10 @@ class WandBWriter:
                 offline, log locally.
         """
         try:
-            import wandb
             import os
+
+            import wandb
+
             os.environ["WANDB_HOST"] = "closed"
 
             wandb.login()

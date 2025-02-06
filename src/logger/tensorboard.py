@@ -1,9 +1,11 @@
 from datetime import datetime
+from logging import Logger
+
 import numpy as np
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from logging import Logger
+
 
 class TensorBoardWriter:
     """
@@ -38,7 +40,7 @@ class TensorBoardWriter:
         self.run_name = run_name or f"run_{self.run_id}"
         self.log_dir = f"{log_dir}/{project_name}/{self.run_name}"
         self.writer = SummaryWriter(log_dir=self.log_dir)
-        
+
         self.step = 0
         self.mode = ""
         self.timer = datetime.now()
@@ -86,8 +88,10 @@ class TensorBoardWriter:
     def add_histogram(self, hist_name, values_for_hist, bins=30):
         if isinstance(values_for_hist, torch.Tensor):
             values_for_hist = values_for_hist.detach().cpu().numpy()
-        
-        self.writer.add_histogram(self._object_name(hist_name), values_for_hist, self.step, bins=bins)
+
+        self.writer.add_histogram(
+            self._object_name(hist_name), values_for_hist, self.step, bins=bins
+        )
 
     def add_table(self, table_name, table: pd.DataFrame):
         """

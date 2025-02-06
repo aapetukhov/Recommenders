@@ -1,6 +1,6 @@
-import torch
 import numpy as np
 import pandas as pd
+import torch
 from torch.utils.data import IterableDataset
 
 
@@ -9,13 +9,14 @@ class StreamRetailDataset(IterableDataset):
     Streamable Retail Dataset.
     Allows for huuuge data processing without putting it on disk.
     """
+
     def __init__(
         self,
         file_path: str,
         dt_features: list,
         kt_features: list,
         label_column="label",
-        chunk_size=10000
+        chunk_size=10000,
     ):
         self.file_path = file_path
         self.chunk_size = chunk_size
@@ -32,12 +33,16 @@ class StreamRetailDataset(IterableDataset):
 
         # TODO: make batches dict-based
         # its tuple-based now
-        
+
         for user, item, label in zip(users, items, labels):
             yield {
-                "user": torch.tensor(user, dtype=torch.long), # TODO: fix when there are float features
-                "item": torch.tensor(item, dtype=torch.long), # TODO: fix when there are float features
-                "label": torch.tensor(label, dtype=torch.float32), # for BCE loss
+                "user": torch.tensor(
+                    user, dtype=torch.long
+                ),  # TODO: fix when there are float features
+                "item": torch.tensor(
+                    item, dtype=torch.long
+                ),  # TODO: fix when there are float features
+                "label": torch.tensor(label, dtype=torch.float32),  # for BCE loss
             }
 
     def __iter__(self):

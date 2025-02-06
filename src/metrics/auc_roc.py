@@ -9,6 +9,7 @@ class AUC_ROC(BaseMetric):
     """
     Compute Area Under the Curve (AUC) from batch logits and labels.
     """
+
     def __init__(self, name="AUC_ROC"):
         super().__init__(name)
 

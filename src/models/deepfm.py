@@ -21,7 +21,7 @@ class AttentionLayer(nn.Module):
 
         attention_scores = torch.matmul(Q, K.transpose(-1, -2)) / (Q.shape[-1] ** 0.5)
         attention_weights = self.softmax(attention_scores)
-        Z = torch.matmul(attention_weights, V) # [BS, num_feats, embed_dim]
+        Z = torch.matmul(attention_weights, V)  # [BS, num_feats, embed_dim]
         # TODO: check the math here
         u_weights = self.softmax(self.W_u(Z).squeeze(-1))  # [BS, num_feats]
         u = (u_weights.unsqueeze(-1) * Z).sum(dim=1)
@@ -37,43 +37,61 @@ class FeatureEmbedding(nn.Module):
     Keyword arguments:
         feature_sizes : dict -- dict of type {feature_name: num_unique_values}
     """
+
     def __init__(self, feature_sizes: dict, max_embed_dim=32):
         super(FeatureEmbedding, self).__init__()
-        self.embeddings = nn.ModuleDict({
-            feat_name: nn.Embedding(num_embeddings=size, embedding_dim=min(int(size ** 0.5), max_embed_dim))
-            for feat_name, size in feature_sizes.items()
-        })
-        self.feature_dims = {feat: min(int(size ** 0.5), max_embed_dim) for feat, size in feature_sizes.items()}
+        self.embeddings = nn.ModuleDict(
+            {
+                feat_name: nn.Embedding(
+                    num_embeddings=size,
+                    embedding_dim=min(int(size**0.5), max_embed_dim),
+                )
+                for feat_name, size in feature_sizes.items()
+            }
+        )
+        self.feature_dims = {
+            feat: min(int(size**0.5), max_embed_dim)
+            for feat, size in feature_sizes.items()
+        }
 
     def forward(self, x):
-        embedded = [self.embeddings[feat_name](x[:, i]) for i, feat_name in enumerate(self.embeddings)]
+        embedded = [
+            self.embeddings[feat_name](x[:, i])
+            for i, feat_name in enumerate(self.embeddings)
+        ]
         return embedded
 
 
 class FeatureProjection(nn.Module):
     def __init__(self, input_dims, output_dim):
         super().__init__()
-        self.projections = nn.ModuleList([
-            nn.Linear(in_dim, output_dim) for in_dim in input_dims
-        ])
+        self.projections = nn.ModuleList(
+            [nn.Linear(in_dim, output_dim) for in_dim in input_dims]
+        )
 
     def forward(self, embedded_features):
-        projected = [proj(feat) for proj, feat in zip(self.projections, embedded_features)]
+        projected = [
+            proj(feat) for proj, feat in zip(self.projections, embedded_features)
+        ]
         return torch.stack(projected, dim=1)  # (batch_size, num_features, output_dim)
-
 
 
 class DeepFM(nn.Module):
     """
     Main model class
     """
+
     def __init__(self, user_feature_sizes, item_feature_sizes, embed_dim):
         super(DeepFM, self).__init__()
         self.user_embed = FeatureEmbedding(user_feature_sizes, embed_dim)
         self.item_embed = FeatureEmbedding(item_feature_sizes, embed_dim)
 
-        self.user_proj = FeatureProjection(list(self.user_embed.feature_dims.values()), embed_dim)
-        self.item_proj = FeatureProjection(list(self.item_embed.feature_dims.values()), embed_dim)
+        self.user_proj = FeatureProjection(
+            list(self.user_embed.feature_dims.values()), embed_dim
+        )
+        self.item_proj = FeatureProjection(
+            list(self.item_embed.feature_dims.values()), embed_dim
+        )
 
         self.user_attention = AttentionLayer(embed_dim)
         self.item_attention = AttentionLayer(embed_dim)
@@ -86,7 +104,7 @@ class DeepFM(nn.Module):
         u_dt = self.item_attention(item_emb)  # (batch_size, d)
 
         return {"logits": (u_kt * u_dt).sum(dim=1)}
-    
+
     def __str__(self):
         """
         Model info with the number of parameters.

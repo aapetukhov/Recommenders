@@ -128,7 +128,9 @@ class BaseDataset(Dataset):
             instance_data.update({"complex_spectrogram": complex_spectrogram})
 
         # exclude WAV augs for prevending double augmentations
-        instance_data = self.preprocess_data(instance_data, special_keys=["get_spectrogram", "mix"])
+        instance_data = self.preprocess_data(
+            instance_data, special_keys=["get_spectrogram", "mix"]
+        )
 
         return instance_data
 
@@ -202,7 +204,9 @@ class BaseDataset(Dataset):
 
         return data_object.unsqueeze(0)
 
-    def preprocess_data(self, instance_data, special_keys=["get_spectrogram"], single_key=None):
+    def preprocess_data(
+        self, instance_data, special_keys=["get_spectrogram"], single_key=None
+    ):
         """
         Preprocess data with instance transforms.
 
@@ -222,13 +226,17 @@ class BaseDataset(Dataset):
 
         if single_key is not None:
             if single_key in self.instance_transforms:  # eg train mode
-                instance_data[single_key] = self.instance_transforms[single_key](instance_data[single_key])
+                instance_data[single_key] = self.instance_transforms[single_key](
+                    instance_data[single_key]
+                )
             return instance_data
 
         for transform_name in self.instance_transforms.keys():
             if transform_name in special_keys:
                 continue  # skip special key
-            instance_data[transform_name] = self.instance_transforms[transform_name](instance_data[transform_name])
+            instance_data[transform_name] = self.instance_transforms[transform_name](
+                instance_data[transform_name]
+            )
         return instance_data
 
     @staticmethod
@@ -267,7 +275,8 @@ class BaseDataset(Dataset):
         """
         for entry in index:
             assert "mix_wav_path" in entry, (
-                "Each dataset item should include field 'mix_wav_path'" " - path to mix audio file."
+                "Each dataset item should include field 'mix_wav_path'"
+                " - path to mix audio file."
             )
 
     @staticmethod
