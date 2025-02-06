@@ -1,6 +1,6 @@
 train:
   _target_: src.datasets.StreamRetailDataset
-  file_path: /Users/andreypetukhov/Documents/work-related/LightFM/data/train_dataset.csv
+  file_path: /Users/andreypetukhov/Documents/work-related/LightFM/data/test_dataset.csv
   # passed as list
   dt_features:
     - "user_inn_dt_id"
@@ -12,7 +12,7 @@ train:
     - "item_categoryid_id"
     - "item_available_id"
   label_column: "label"
-  chunk_size: 10000
+  chunk_size: 5000
 
 val:
   _target_: src.datasets.LibrispeechDatasetKaggle
@@ -28,4 +28,4 @@ val:
     - "item_available_id"
   label_column: "label"
   label_column: "label"
-  chunk_size: 10000
+  chunk_size: 5000

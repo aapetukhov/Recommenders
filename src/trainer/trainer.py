@@ -73,10 +73,8 @@ class Trainer(BaseTrainer):
         """
         if mode == "train":
             self.log_attention_matrix(mode, **batch)
-            self.log_attention_weights(mode, **batch)
         else:
             self.log_attention_matrix(mode, **batch)
-            self.log_attention_weights(mode, **batch)
 
     def log_attention_matrix(self, mode, **batch):
         # TODO: implement

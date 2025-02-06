@@ -295,6 +295,16 @@ class BaseTrainer:
 
         return self.evaluation_metrics.result()
 
+    def process_batch(self, batch, metric):
+        """Must be defined in in the nested class
+        
+        Keyword arguments:
+        batch -- dict-based batch
+        metric -- MetricTracker
+        """
+        raise NotImplementedError()
+        
+
     def _monitor_performance(self, logs, not_improved_count):
         """
         Check if there is an improvement in the metrics. Used for early

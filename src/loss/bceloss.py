@@ -2,14 +2,14 @@ import torch
 from torch import nn
 
 
-class BCELoss(nn.Module):
+class LogitsBCELoss(nn.Module):
     """
-    BCE loss
+    BCE loss with logits
     """
 
     def __init__(self):
         super().__init__()
-        self.loss = nn.BCELoss()
+        self.loss = nn.BCEWithLogitsLoss()
 
     def forward(self, logits: torch.Tensor, labels: torch.Tensor, **batch):
         """

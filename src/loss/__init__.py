@@ -1,1 +1,1 @@
-from src.loss.bceloss import BCELoss
+from src.loss.bceloss import LogitsBCELoss

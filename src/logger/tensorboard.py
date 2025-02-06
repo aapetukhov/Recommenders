@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from logging import Logger
 
 class TensorBoardWriter:
     """
@@ -23,16 +24,16 @@ class TensorBoardWriter:
     ):
         """
         Args:
-            logger (Logger): логгер для вывода сообщений.
-            project_config (dict): конфиг текущего эксперимента.
-            project_name (str): название проекта (используется в TensorBoard логах).
-            entity (str | None): игнорируется, нужен только для совместимости.
-            run_id (str | None): id текущего запуска.
-            run_name (str | None): название запуска (используется в TensorBoard логах).
-            mode (str): не используется в TensorBoard, но оставлен для совместимости.
-            log_dir (str): директория для логов TensorBoard.
+            logger (Logger): logger for essages layout
+            project_config (dict): exp config
+            project_name (str): project name used in tensorboard logs
+            entity (str | None): ignored
+            run_id (str | None): run id (used in tensorboard logs)
+            run_name (str | None): run name (used in tensorboard logs)
+            mode (str): ignored
+            log_dir (str): dir for logs
         """
-        self.logger = logger
+        self.logger: Logger = logger
         self.run_id = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.run_name = run_name or f"run_{self.run_id}"
         self.log_dir = f"{log_dir}/{project_name}/{self.run_name}"
