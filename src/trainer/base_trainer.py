@@ -283,7 +283,6 @@ class BaseTrainer:
             for batch_idx, batch in tqdm(
                 enumerate(dataloader),
                 desc=part,
-                total=len(dataloader),
             ):
                 batch = self.process_batch(
                     batch,
