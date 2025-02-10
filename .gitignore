@@ -134,3 +134,6 @@ category_maps.json
 # legacy models
 ease.py
 test.py
+
+# logs
+deepfm_logs/
