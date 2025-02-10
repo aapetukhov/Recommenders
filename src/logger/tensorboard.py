@@ -17,7 +17,7 @@ class TensorBoardWriter:
         logger,
         project_config,
         project_name,
-        entity=None,  # TODO: refoctor
+        entity=None,  # TODO: refactor
         run_id=None,
         run_name=None,
         mode="online",  # TODO: refactor

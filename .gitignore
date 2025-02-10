@@ -137,3 +137,4 @@ test.py
 
 # logs
 deepfm_logs/
+runs/

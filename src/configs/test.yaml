@@ -1,5 +1,5 @@
 defaults:
-  - writer: wandb
+  - writer: tensorboard
   - metrics: default
   - datasets: retail
   - dataloader: default
