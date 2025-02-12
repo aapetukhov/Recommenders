@@ -39,7 +39,7 @@ class TensorBoardWriter:
         self.tensorboard = program.TensorBoard()
         self.tensorboard.configure(argv=[None, "--logdir", log_dir])
         self.url = self.tensorboard.launch()
-        print("TensorBoard на", self.url)
+        print(f"\033[1;32m==== TensorBoard запущен на {self.url} ====\033[0m")
 
         self.logger: Logger = logger
         self.run_id = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
