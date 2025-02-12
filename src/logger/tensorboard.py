@@ -22,7 +22,7 @@ class TensorBoardWriter:
         run_id=None,
         run_name=None,
         mode="online",  # TODO: refactor
-        log_dir="./runs",
+        log_dir="./tensorboard",
         **kwargs,
     ):
         """
