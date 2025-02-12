@@ -4,6 +4,7 @@ torchmetrics
 torchaudio==2.2.0
 numpy==1.26.4
 scikit-learn==0.24.2
+tensorboard
 tqdm
 matplotlib
 pandas

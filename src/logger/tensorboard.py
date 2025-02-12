@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import torch
 from torch.utils.tensorboard import SummaryWriter
+from tensorboard import program
 
 
 class TensorBoardWriter:
@@ -35,6 +36,11 @@ class TensorBoardWriter:
             mode (str): ignored
             log_dir (str): dir for logs
         """
+        self.tensorboard = program.TensorBoard()
+        self.tensorboard.configure(argv=[None, "--logdir", log_dir])
+        self.url = self.tensorboard.launch()
+        print("TensorBoard на", self.url)
+
         self.logger: Logger = logger
         self.run_id = run_id or datetime.now().strftime("%Y%m%d_%H%M%S")
         self.run_name = run_name or f"run_{self.run_id}"
@@ -68,7 +74,6 @@ class TensorBoardWriter:
         self.logger.info(f"Checkpoint saved: {checkpoint_path}")
 
     def add_scalar(self, scalar_name, scalar):
-        # TODO: check
         self.writer.add_scalar(self._object_name(scalar_name), scalar, self.step)
 
     def add_scalars(self, scalars):
@@ -76,7 +81,6 @@ class TensorBoardWriter:
             self.add_scalar(scalar_name, scalar)
 
     def add_image(self, image_name, image):
-        # TODO: check
         if isinstance(image, torch.Tensor):
             self.writer.add_image(self._object_name(image_name), image, self.step)
         else:

@@ -10,6 +10,7 @@ from tqdm.auto import tqdm
 
 from src.datasets.data_utils import inf_loop
 from src.logger.wandb import WandBWriter
+from src.logger.tensorboard import TensorBoardWriter
 from src.metrics.tracker import MetricTracker
 from src.utils.io_utils import ROOT_PATH
 
@@ -72,7 +73,7 @@ class BaseTrainer:
         self.log_step = config.trainer.get("log_step", 50)
 
         self.model: nn.Module = model
-        self.criterion = criterion
+        self.criterion: nn.Module = criterion
         self.optimizer: torch.optim.Optimizer = optimizer
         self.lr_scheduler: torch.optim.lr_scheduler.LRScheduler = lr_scheduler
         self.batch_transforms = batch_transforms
@@ -121,7 +122,7 @@ class BaseTrainer:
                 self.early_stop = inf
 
         # setup visualization writer instance
-        self.writer: WandBWriter = writer
+        self.writer: TensorBoardWriter = writer
 
         # define metrics
         self.metrics = metrics
@@ -161,6 +162,7 @@ class BaseTrainer:
         except KeyboardInterrupt as e:
             self.logger.info("Saving model on keyboard interrupt")
             self._save_checkpoint(self._last_epoch, save_best=False)
+            self.writer.close()
             raise e
 
     def _train_process(self):
@@ -195,6 +197,7 @@ class BaseTrainer:
                 self._save_checkpoint(epoch, save_best=best, only_best=True)
 
             if stop_process:  # early_stop
+                self.writer.close()
                 break
 
     def _train_epoch(self, epoch):

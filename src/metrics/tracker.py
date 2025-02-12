@@ -1,7 +1,7 @@
 import pandas as pd
 
 
-# TODO: study closer
+
 class MetricTracker:
     """
     Class to aggregate metrics from many batches.
