@@ -46,5 +46,6 @@ class StreamRetailDataset(IterableDataset):
             }
 
     def __iter__(self):
+        # maybe pd.read_parquet
         for chunk in pd.read_csv(self.file_path, chunksize=self.chunk_size):
             yield from self.parse_data(chunk)
