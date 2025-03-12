@@ -51,8 +51,8 @@ class StreamRetailDataset(IterableDataset):
         for chunk in pd.read_csv(self.file_path, chunksize=self.chunk_size):
             yield from self.parse_data(chunk)
 
-    def __iter__(self):
-        parquet_file = pq.ParquetFile(self.file_path)
-        for chunk in parquet_file.iter_batches(batch_size=self.chunk_size):
-            chunk_df = chunk.to_pandas()
-            yield from self.parse_data(chunk_df)
+    # def __iter__(self):
+    #     parquet_file = pq.ParquetFile(self.file_path)
+    #     for chunk in parquet_file.iter_batches(batch_size=self.chunk_size):
+    #         chunk_df = chunk.to_pandas()
+    #         yield from self.parse_data(chunk_df)

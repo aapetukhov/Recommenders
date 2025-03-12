@@ -3,6 +3,7 @@ import warnings
 import hydra
 import torch
 import json
+import logging
 from hydra.utils import instantiate
 from omegaconf import OmegaConf
 
@@ -24,10 +25,12 @@ def main(config):
         config (DictConfig): hydra experiment config in the right format.
     """
     set_random_seed(config.trainer.seed)
+    # turning off tensorboard stdout spamming
+    logging.getLogger("tensorboard").setLevel(logging.ERROR)
+    logging.getLogger("tensorboard").propagate = False
 
     project_config = OmegaConf.to_container(config)
     logger = setup_saving_and_logging(config)
-    # TODO: make a TensorBoard logger
     writer = instantiate(config.writer, logger, project_config)
 
     if config.trainer.device == "auto":
@@ -65,6 +68,7 @@ def main(config):
 
     # build learning rate scheduler
     epoch_len = compute_epoch_len(dataloaders["train"])
+    logger.info(f"\033[1;34m{'=' * 10} Epoch length: {epoch_len} steps {'=' * 10}\033[0m")
     lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer, steps_per_epoch=epoch_len)
 
     trainer = Trainer(
