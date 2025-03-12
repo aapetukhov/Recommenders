@@ -18,3 +18,4 @@ isort
 pre-commit
 opencv-python
 gdown
+pyarrow

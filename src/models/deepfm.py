@@ -81,7 +81,12 @@ class DeepFM(nn.Module):
     Main model class
     """
 
-    def __init__(self, user_feature_sizes, item_feature_sizes, embed_dim):
+    def __init__(
+        self,
+        user_feature_sizes: dict,
+        item_feature_sizes: dict,
+        embed_dim: int
+    ):
         super(DeepFM, self).__init__()
         self.user_embed = FeatureEmbedding(user_feature_sizes, embed_dim)
         self.item_embed = FeatureEmbedding(item_feature_sizes, embed_dim)
