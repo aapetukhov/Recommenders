@@ -87,7 +87,12 @@ def get_dataloaders(config, device):
 
 def compute_epoch_len(dataloader):
     if isinstance(dataloader.dataset, torch.utils.data.IterableDataset):
-        length = sum(1 for _ in dataloader)
+        length = 0
+        for _ in dataloader:
+            length += 1
+            if length % 1000 == 0:
+                print(f"WAIT FOR NOW. COUNTED (in batches): {length}")
+        # length = sum(1 for _ in dataloader)
         print(f"Length of the dataset (in batches): {length}")
         return length
     

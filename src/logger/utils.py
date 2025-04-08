@@ -40,3 +40,18 @@ def plot_images(imgs, config):
     plt.close()
 
     return image
+
+
+def plot_tensor_to_tb(tag, attention_weights):
+    fig, ax = plt.subplots(figsize=(len(attention_weights[0]) * 0.4, 1.5))
+    ax.imshow(attention_weights, cmap="inferno", aspect="auto")
+    ax.set_title(tag)
+    fig.tight_layout()
+    
+    buf = io.BytesIO()
+    fig.savefig(buf, format="png", bbox_inches="tight")
+    buf.seek(0)
+    plt.close(fig)
+    
+    image = ToTensor()(PIL.Image.open(buf))
+    return image

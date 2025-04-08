@@ -86,8 +86,6 @@ class BaseTrainer:
             else:
                 self.epoch_len = len(self.train_dataloader)
         else:
-            # iteration-based training
-            # TODO: what to do with this?
             self.train_dataloader = inf_loop(self.train_dataloader)
             self.epoch_len = epoch_len
 
@@ -126,7 +124,6 @@ class BaseTrainer:
 
         # define metrics
         self.metrics = metrics
-        # TODO: add proper metrics to track
         self.train_metrics = MetricTracker(
             *self.config.writer.loss_names,
             "grad_norm",

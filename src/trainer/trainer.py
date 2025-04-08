@@ -1,8 +1,10 @@
 import pandas as pd
 import torch
+import random
 
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+from src.logger.utils import plot_tensor_to_tb
 
 
 class Trainer(BaseTrainer):
@@ -72,46 +74,18 @@ class Trainer(BaseTrainer):
                 rules to apply.
         """
         if mode == "train":
-            self.log_attention_matrix(mode, **batch)
+            self.log_attention_weights(mode, **batch)
         else:
-            self.log_attention_matrix(mode, **batch)
+            self.log_attention_weights(mode, **batch)
 
-    def log_attention_matrix(self, mode, **batch):
-        # TODO: implement
-        pass
+    def log_attention_weights(self, mode, kt_weights, dt_weights, **batch):
+        if kt_weights is None or dt_weights is None:
+            return
+        batch_size = self.evaluation_dataloaders["val"].batch_size
+        idx = 0
 
-    def log_attention_weights(self, mode, **batch):
-        # TODO: implement
-        pass
+        user_w = kt_weights[idx].detach().cpu().numpy().reshape(1, -1)
+        item_w = dt_weights[idx].detach().cpu().numpy().reshape(1, -1)
 
-    def log_audio(self, mix, s1, s2, s1_pred, s2_pred, mode, **batch):
-        audio_samples = {
-            "mix": self.writer.wandb.Audio(
-                mix[0].detach().cpu().numpy(), sample_rate=16000
-            ),
-            "s1": self.writer.wandb.Audio(
-                s1[0].detach().cpu().numpy(), sample_rate=16000
-            ),
-            "s2": self.writer.wandb.Audio(
-                s2[0].detach().cpu().numpy(), sample_rate=16000
-            ),
-            "s1_pred": self.writer.wandb.Audio(
-                s1_pred[0].detach().cpu().numpy(), sample_rate=16000
-            ),
-            "s2_pred": self.writer.wandb.Audio(
-                s2_pred[0].detach().cpu().numpy(), sample_rate=16000
-            ),
-        }
-
-        audio_df = pd.DataFrame([audio_samples])
-        self.writer.add_table(f"{mode}/audio_table", audio_df)
-
-        # logging scheme might be different for different partitions
-        if mode == "train":  # the method is called only every self.log_step steps
-            # TODO: add logging
-            # Log Stuff
-            pass
-        else:
-            # Log Stuff
-            # TODO: add logging
-            pass
+        self.writer.add_image(f"{mode}/user_attention", plot_tensor_to_tb("user_attention", user_w))
+        self.writer.add_image(f"{mode}/item_attention", plot_tensor_to_tb("item_attention", item_w))

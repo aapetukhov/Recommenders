@@ -1,6 +1,13 @@
 train: [] # metrics that are calculated during training
 inference: # metrics that are calculated during inference (eval)
   - _target_: src.metrics.Accuracy
-    name: "accuracy" # it is better to avoid spaces in names
+    name: "accuracy" # avoid spaces in names
   - _target_: src.metrics.AUC_ROC
     name: "roc-auc"
+  - _target_: src.metrics.AUC_PR
+    name: "pr-auc"
+    device: "cuda"
+  - _target_: src.metrics.F1_Score
+    name: "f1-score"
+    threshold: 0.0
+    device: "cuda"

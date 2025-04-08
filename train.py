@@ -25,7 +25,8 @@ def main(config):
         config (DictConfig): hydra experiment config in the right format.
     """
     set_random_seed(config.trainer.seed)
-    # turning off tensorboard stdout spamming
+
+    # setting tensorboard verbosity to 0 to avoid spamming in console
     logging.getLogger("tensorboard").setLevel(logging.ERROR)
     logging.getLogger("tensorboard").propagate = False
 
@@ -45,10 +46,10 @@ def main(config):
 
     # build model architecture, then print to console
     # TODO: need to pass sizes when init
-    with open("/Users/andreypetukhov/Documents/work-related/LightFM/data/user_feature_sizes.json", "r") as f:
+    with open(config.data.user_feature_sizes_path, "r") as f:
         user_feature_sizes = json.load(f)
 
-    with open("/Users/andreypetukhov/Documents/work-related/LightFM/data/item_feature_sizes.json", "r") as f:
+    with open(config.data.item_feature_sizes_path, "r") as f:
         item_feature_sizes = json.load(f)
 
     model = instantiate(
@@ -67,7 +68,10 @@ def main(config):
     optimizer = instantiate(config.optimizer, params=trainable_params)
 
     # build learning rate scheduler
-    epoch_len = compute_epoch_len(dataloaders["train"])
+    # epoch_len = compute_epoch_len(dataloaders["train"])
+    epoch_len = 21926
+    # epoch_len = 6460
+    # epoch_len = 333
     logger.info(f"\033[1;34m{'=' * 10} Epoch length: {epoch_len} steps {'=' * 10}\033[0m")
     lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer, steps_per_epoch=epoch_len)
 

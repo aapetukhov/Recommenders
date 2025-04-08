@@ -1,6 +1,6 @@
 import torch
 from torchmetrics import AUROC
-from sklearn.metrics import roc_auc_score
+# from sklearn.metrics import roc_auc_score
 
 from src.metrics.base_metric import BaseMetric
 

@@ -3,9 +3,10 @@ from torchmetrics import AveragePrecision
 from src.metrics.base_metric import BaseMetric
 
 
-class AP(BaseMetric):
-    def __init__(self, name="AP"):
+class AUC_PR(BaseMetric):
+    def __init__(self, name="AP", device="cuda"):
         super().__init__(name)
-        self.ap = AveragePrecision(task="binary")
+        self.device = device
+        self.aupr = AveragePrecision(task="binary").to(device)
     def __call__(self, **batch):
-        return self.ap(batch["logits"], batch["label"]).item()
+        return self.aupr(batch["logits"], batch["label"].long()).item()

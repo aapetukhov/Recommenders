@@ -1,2 +1,5 @@
 _target_: src.models.DeepFM
+embed_dim: 128
+num_user_double_feats: 8
+num_item_double_feats: 8
 # model parameters

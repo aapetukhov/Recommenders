@@ -1,9 +1,9 @@
 torch==2.2.0
 torchvision==0.17.0
-torchmetrics
 torchaudio==2.2.0
+torchmetrics
 numpy==1.26.4
-scikit-learn==0.24.2
+scikit-learn
 tensorboard
 tqdm
 matplotlib
@@ -11,11 +11,7 @@ pandas
 wandb
 hydra-core
 einops
-sru
 
 black
 isort
 pre-commit
-opencv-python
-gdown
-pyarrow

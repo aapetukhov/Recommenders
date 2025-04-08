@@ -1,0 +1,57 @@
+train:
+  _target_: src.datasets.StreamDataset
+  file_path: /home/datalab/nfs/deepfm/data/train_9_coalesced/train_2024-10-10_2024_10_18.parquet
+  # file_path: /home/datalab/nfs/deepfm/data/train_9_coalesced/test_2024-10-19_2024-10-19.parquet
+  # passed as list
+  dt_features:
+    - "inn_dt_index"
+    - "dt_okved_index"
+    - "dt_okato_index"
+    - "dt_bic_34_index"
+    - "dt_bic_56_index"
+    - "dt_bic_79_index"
+    - "dt_num_13_index"
+    - "dt_num_45_index"
+    - "dt_num_68_index"
+    - "dt_buyers_count_index"
+  kt_features:
+    - "inn_kt_index"
+    - "kt_okved_index"
+    - "kt_okato_index"
+    - "kt_bic_34_index"
+    - "kt_bic_56_index"
+    - "kt_bic_79_index"
+    - "kt_num_13_index"
+    - "kt_num_45_index"
+    - "kt_num_68_index"
+    - "kt_buyers_count_index"
+  label_column: "label"
+  chunk_size: 1024
+
+val:
+  _target_: src.datasets.StreamDataset
+  file_path: /home/datalab/nfs/deepfm/data/train_9_coalesced/test_2024-10-19_2024-10-19.parquet
+  dt_features:
+    - "inn_dt_index"
+    - "dt_okved_index"
+    - "dt_okato_index"
+    - "dt_bic_34_index"
+    - "dt_bic_56_index"
+    - "dt_bic_79_index"
+    - "dt_num_13_index"
+    - "dt_num_45_index"
+    - "dt_num_68_index"
+    - "dt_buyers_count_index"
+  kt_features:
+    - "inn_kt_index"
+    - "kt_okved_index"
+    - "kt_okato_index"
+    - "kt_bic_34_index"
+    - "kt_bic_56_index"
+    - "kt_bic_79_index"
+    - "kt_num_13_index"
+    - "kt_num_45_index"
+    - "kt_num_68_index"
+    - "kt_buyers_count_index"
+  label_column: "label"
+  chunk_size: 1024
