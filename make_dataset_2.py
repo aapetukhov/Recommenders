@@ -20,10 +20,11 @@ sys.path.insert(0, '/usr/sdp/current/spark3-client/python/lib/py4j_current')
 conf = SparkConf()\
     .setAppName('Train-Feat-TestSplit')\
     .setMaster("yarn")\
-    .set("spark.executor.instances", "12")\
-    .set("spark.executor.cores", "16")\
-    .set("spark.driver.memory", "30g")\
-    .set("spark.executor.memory", "40g")\
+    .set("spark.executor.instances", "6")\
+    .set("spark.executor.cores", "15")\
+    .set("spark.driver.memory", "20g")\
+    .set("spark.executor.memory", "64g")\
+    .set("spark.executor.memoryOverhead", "16g")\
     .set("spark.sql.parquet.int96RebaseModeInRead", "CORRECTED")\
     .set("spark.sql.parquet.int96RebaseMode", "CORRECTED")
 spark = SparkSession.builder.config(conf=conf).getOrCreate()
@@ -35,7 +36,7 @@ test_date_start = "2024-10-21"
 test_date_end = "2024-10-22"
 save_schema = "arnsdpsbx_t_team_fin_adviser"
 
-# READ EMBEDDINGS
+# ЭМБЕДДИНГИ
 emb_cols = [f"embed_{i}" for i in range(256)]
 embeddings = (spark.read.parquet(
     "hdfs:///hdfsgw/arnsdpcc360__Podpidka_na_produkty_Postnovoj-CUSTOM_CIB_ML360-MON_AI_UI_EMBEDDING_V2/data/custom/cib/ml360/pa/mon_ai_ui_embedding_v2/mon=2024-09-30")
@@ -122,28 +123,25 @@ df = df.withColumn("kt_skewness_sum",
     )
 
 # SPLIT: ВИТРИНЫ
-# Витрина взаимодействий
+# ВИТРИНА ВЗАИМОДЕЙСТВИЙ
 interactions_train = df.select("inn_kt", "inn_dt", "short_dt")\
     .withColumn("label", sf.lit(1))\
     .withColumn("short_dt", sf.to_date("short_dt", "yyyy-MM-dd"))
 
-# Витрина с фичами kt
+# ВИТРИНА С ФИЧАМИ KT
 kt_cols = ["inn_kt", "okved_cd_kt", "okato_cd_kt", "bic_kt_34", "bic_kt_56", "bic_kt_79",
            "num_kt_13", "num_kt_45", "num_kt_68", "kt_buyers_count",
            "kt_avg_sum", "kt_stddev_sum", "kt_min_sum", "kt_max_sum",
            "kt_median_sum", "kt_skewness_sum"]
-kt_features = df.select(kt_cols).distinct()\
-    .join(embeddings.withColumnRenamed("inn", "inn_kt"), on="inn_kt", how="inner")\
-    .withColumnRenamed("embedding", "kt_embedding")
+kt_features = df.select(kt_cols).distinct()
 
-# Витрина с фичами dt
+# ВИТРИНА С ФИЧАМИ DT
 dt_cols = ["inn_dt", "okved_cd_dt", "okato_cd_dt", "bic_dt_34", "bic_dt_56", "bic_dt_79",
            "num_dt_13", "num_dt_45", "num_dt_68", "dt_buyers_count",
            "dt_avg_sum", "dt_stddev_sum", "dt_min_sum", "dt_max_sum",
            "dt_median_sum", "dt_skewness_sum"]
-dt_features = df.select(dt_cols).distinct()\
-    .join(embeddings.withColumnRenamed("inn", "inn_dt"), on="inn_dt", how="inner")\
-    .withColumnRenamed("embedding", "dt_embedding")
+dt_features = df.select(dt_cols).distinct()
+
 
 # КАТЕГОРИАЛЬНАЯ ИНДЕКСАЦИЯ
 kt_cat = ["inn_kt", "okved_cd_kt", "okato_cd_kt", "bic_kt_34", "bic_kt_56", "bic_kt_79",
@@ -163,6 +161,7 @@ indexer_dt = StringIndexer(inputCols=dt_cat,
 model_dt = indexer_dt.fit(dt_features)
 dt_features_indexed = model_dt.transform(dt_features)
 
+
 # СОХРАНЕНИЕ МАППИНГОВ
 kt_mappings = {col: model_kt.labelsArray[i] for i, col in enumerate(kt_cat)}
 dt_mappings = {col: model_dt.labelsArray[i] for i, col in enumerate(dt_cat)}
@@ -176,6 +175,7 @@ with open("mappings/kt_num_embeddings.pkl", "wb") as f:
     pickle.dump(kt_num_embeddings, f)
 with open("mappings/dt_num_embeddings.pkl", "wb") as f:
     pickle.dump(dt_num_embeddings, f)
+
 
 # TEST СЛОВАРЬ (только для пользователей с >=15 взаимодействиями)
 test_df = filter_inn(spark, test_date_start, test_date_end)\
@@ -196,10 +196,80 @@ test_dict = {row["inn_dt_index"]: row["kt_set"] for row in test_dict_df.collect(
 with open("mappings/test_dict.pkl", "wb") as f:
     pickle.dump(test_dict, f)
 
-# SAVE ВИТРИН
-interactions_train.coalesce(60)\
+
+# СОХРАНЕНИЕ ВИТРИНЫ
+interactions_train_indexed = interactions_train\
+    .join(dt_features_indexed.select("inn_dt", "inn_dt_index"), on="inn_dt", how="left")\
+    .join(kt_features_indexed.select("inn_kt", "inn_kt_index"), on="inn_kt", how="left")
+    
+interactions_train_indexed.repartition(1000)\
     .write.mode("overwrite").saveAsTable(f"{save_schema}.interactions_train")
-kt_features_indexed.coalesce(60)\
-    .write.mode("overwrite").saveAsTable(f"{save_schema}.kt_features")
-dt_features_indexed.coalesce(60)\
-    .write.mode("overwrite").saveAsTable(f"{save_schema}.dt_features")
+
+
+# СЛОВАРЬ DT ФИЧЕЙ
+dt_features_dict = dt_features_indexed.select(
+    "inn_dt_index",
+    "okved_cd_dt_index", "okato_cd_dt_index", "bic_dt_34_index", "bic_dt_56_index", "bic_dt_79_index",
+    "num_dt_13_index", "num_dt_45_index", "num_dt_68_index",
+    "dt_buyers_count", "dt_avg_sum", "dt_stddev_sum", "dt_min_sum", "dt_max_sum",
+    "dt_median_sum", "dt_skewness_sum", "dt_embedding"
+).rdd.map(lambda row: (row["inn_dt_index"], row.asDict())).collectAsMap()
+
+with open("dt_features_dict.pkl", "wb") as f:
+    pickle.dump(dt_features_dict, f)
+
+
+# СЛОВАРЬ KT ФИЧЕЙ
+kt_features_dict = kt_features_indexed.select(
+    "inn_kt_index",
+    "okved_cd_kt_index", "okato_cd_kt_index", "bic_kt_34_index", "bic_kt_56_index", "bic_kt_79_index",
+    "num_kt_13_index", "num_kt_45_index", "num_kt_68_index",
+    "kt_buyers_count", "kt_avg_sum", "kt_stddev_sum", "kt_min_sum", "kt_max_sum",
+    "kt_median_sum", "kt_skewness_sum", "kt_embedding"
+).rdd.map(lambda row: (row["inn_kt_index"], row.asDict())).collectAsMap()
+
+with open("kt_features_dict.pkl", "wb") as f:
+    pickle.dump(kt_features_dict, f)
+
+
+# ДЛЯ NEGATIVE SAMPLING УНИКАЛЬНЫЕ ИНДЕКСЫ
+dt_unique = interactions_train_indexed.select("inn_dt_index")\
+    .distinct()\
+    .rdd.flatMap(lambda x: x)\
+    .collect()
+
+kt_unique = interactions_train_indexed.select("inn_kt_index")\
+    .distinct()\
+    .rdd.flatMap(lambda x: x)\
+    .collect()
+
+with open("unique_inn_dt_indices.pkl", "wb") as f:
+    pickle.dump(dt_unique, f)
+with open("unique_inn_kt_indices.pkl", "wb") as f:
+    pickle.dump(kt_unique, f)
+
+
+# СОХРАНЯЕМ DT ЭМБЕДДИНГИ
+dt_emb = dt_features_indexed.join(
+    embeddings.withColumnRenamed("inn", "inn_dt"),
+    on="inn_dt",
+    how="inner"
+).select("inn_dt_index", "embedding")
+
+dt_emb_dict = dt_emb.rdd.map(lambda row: (row["inn_dt_index"], row["embedding"])).collectAsMap()
+
+with open("dt_embeddings_dict.pkl", "wb") as f:
+    pickle.dump(dt_emb_dict, f)
+
+
+# СОХРАНЯЕМ KT ЭМБЕДДИНГИ
+kt_emb = kt_features_indexed.join(
+    embeddings.withColumnRenamed("inn", "inn_kt"),
+    on="inn_kt",
+    how="inner"
+).select("inn_kt_index", "embedding")
+
+kt_emb_dict = kt_emb.rdd.map(lambda row: (row["inn_kt_index"], row["embedding"])).collectAsMap()
+
+with open("kt_embeddings_dict.pkl", "wb") as f:
+    pickle.dump(kt_emb_dict, f)

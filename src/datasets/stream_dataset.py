@@ -62,10 +62,7 @@ class StreamDataset(IterableDataset):
                 "label": torch.tensor(label, dtype=torch.float32),  # for BCE loss
             }
 
-    def __iter__(self):
-        # maybe pd.read_parquet
-        # for chunk in pd.read_csv(self.file_path, chunksize=self.chunk_size):
-        #     yield from self.parse_data(chunk)       
+    def __iter__(self):    
         parquet_file = pq.ParquetFile(self.file_path)
         for batch in parquet_file.iter_batches(batch_size=self.chunk_size):
             chunk = batch.to_pandas()
