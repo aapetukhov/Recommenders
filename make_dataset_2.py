@@ -65,7 +65,7 @@ def filter_inn(sqlCtx, start_date, end_date, report_dt="2024-09-30", active_flag
                 (sf.col("org_segment_sber").isin("Микро", "Малые")) &
                 (sf.col("type").isin("ИП", "ЮЛ")))
     if active_flag:
-        base = base.filter(sf.col("active_flg") == 1)
+        base = base.filter(sf.col("active_flg") == 0)
     bas_col = sqlCtx.table("prx_baza_custom_cib_products_custom_cib_products.basis_transactions_coloured")
     f = (bas_col.filter((sf.col("short_dt") >= start_date) & (sf.col("short_dt") <= end_date))
          .filter(sf.col("predicted_value_last") == "оплата по договору")
