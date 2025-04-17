@@ -131,15 +131,29 @@ class DeepFM(nn.Module):
         self.user_attention = AttentionLayer(embed_dim)
         self.item_attention = AttentionLayer(embed_dim)
 
-    def forward(self, item, user, double_item, double_user, **batch):
+        self.dt_emb_proj = nn.Sequential(
+            nn.BatchNorm1d(256, affine=False),
+            nn.Linear(256, embed_dim),
+            nn.BatchNorm1d(embed_dim),
+            nn.ReLU()
+        )
+
+        self.kt_emb_proj = nn.Sequential(
+            nn.BatchNorm1d(256, affine=False),
+            nn.Linear(256, embed_dim),
+            nn.BatchNorm1d(embed_dim),
+            nn.ReLU()
+        )
+
+
+    def forward(self, item, user, double_item, double_user, dt_emb=None, kt_emb=None, **batch):
         """
         User = dt
         Item = kt
         """
-        u_dt, dt_weights = self.embed_user(user, double_user) # (batch_size, d)
-        u_kt, kt_weights = self.embed_item(item, double_item) # (batch_size, d)  
+        u_dt, dt_weights = self.embed_user(user, double_user, dt_emb)
+        u_kt, kt_weights = self.embed_item(item, double_item, kt_emb)
 
-        # TODO: discuss the necessitty of this
         u_dt = F.normalize(u_dt, dim=-1)
         u_kt = F.normalize(u_kt, dim=-1)
 
@@ -147,28 +161,42 @@ class DeepFM(nn.Module):
             "logits": (u_kt * u_dt).sum(dim=1),
             "kt_weights": kt_weights,
             "dt_weights": dt_weights,
-            }
+        }
 
-    def embed_user(self, user, double_user):
+
+    def embed_user(self, user, double_user, dt_emb=None):
         """
         Separate network to embed user (dt).
         """
-        user_emb = self.user_proj(self.user_embed(user)) # (batch_size, n, d)
-        user_double_projected = self.user_double_proj(double_user).unsqueeze(1) # (batch_size, 1, d)
-        user_emb = torch.cat([user_emb, user_double_projected], dim=1) # (batch_size, n + 1, d)
-        u_dt, dt_weights = self.user_attention(user_emb) # (batch_size, d)
-        return u_dt, dt_weights
-    
+        user_emb = self.user_proj(self.user_embed(user))  # (B, n, d)
+        user_double = self.user_double_proj(double_user).unsqueeze(1)  # (B, 1, d)
+        parts = [user_emb, user_double]
 
-    def embed_item(self, item, double_item):
+        if dt_emb is not None:
+            projected = self.dt_emb_proj(dt_emb).unsqueeze(1)  # (B, 1, d)
+            parts.append(projected)
+
+        x = torch.cat(parts, dim=1)  # (B, n+1 [+1], d)
+        u_dt, weights = self.user_attention(x)
+        return u_dt, weights
+
+
+    def embed_item(self, item, double_item, kt_emb=None):
         """
         Separate network to embed item (kt).
         """
-        item_emb = self.item_proj(self.item_embed(item)) # (batch_size, n, d)
-        item_double_projected = self.item_double_proj(double_item).unsqueeze(1) # (batch_size, 1, d)
-        item_emb = torch.cat([item_emb, item_double_projected], dim=1) # (batch_size, n + 1, d)
-        u_kt, dt_weights = self.item_attention(item_emb) # (batch_size, d)
-        return u_kt, dt_weights
+        item_emb = self.item_proj(self.item_embed(item))  # (B, n, d)
+        item_double = self.item_double_proj(double_item).unsqueeze(1)  # (B, 1, d)
+        parts = [item_emb, item_double]
+
+        if kt_emb is not None:
+            projected = self.kt_emb_proj(kt_emb).unsqueeze(1)  # (B, 1, d)
+            parts.append(projected)
+
+        x = torch.cat(parts, dim=1)  # (B, n+1 [+1], d)
+        u_kt, weights = self.item_attention(x)
+        return u_kt, weights
+
 
     def __str__(self):
         """
