@@ -1,0 +1,15 @@
+spark:
+  appName: deepfm
+paths:
+  embeddings: hdfs:///path/to/embeddings
+outputs:
+  hdfs_base: hdfs:///deepfm
+  data_dir: data_18
+  log_file: pipeline.log
+  save_schema: my_schema
+  train_name: interactions_train
+dates:
+  train_date_start: '2024-01-01'
+  train_date_end: '2024-06-30'
+  test_date_start: '2024-07-01'
+  test_date_end: '2024-09-30'
