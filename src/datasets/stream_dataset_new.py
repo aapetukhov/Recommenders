@@ -9,6 +9,7 @@ import torch
 from torch.utils.data import IterableDataset
 import pyarrow.parquet as pq
 
+
 class StreamDataset(IterableDataset):
     def __init__(self, parquet_dir,
                  dt_features, dt_double_features,
