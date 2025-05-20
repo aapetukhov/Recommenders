@@ -44,7 +44,7 @@ class StreamDataset(IterableDataset):
             # positive
             yield self.make_sample(inn_dt, inn_kt, label=1)
 
-            # nigative
+            # negative
             inn_kt_neg = random.choice(self.unique_kt)
             while inn_kt_neg == inn_kt:
                 inn_kt_neg = random.choice(self.unique_kt)
