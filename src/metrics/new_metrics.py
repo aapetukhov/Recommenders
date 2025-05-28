@@ -8,7 +8,6 @@ class HitAtK(BaseMetric):
         self.k = k
 
     def __call__(self, *, logits: torch.Tensor, **_):
-        # logits: (B, L); positive всегда колонка 0
         hit = (logits.topk(self.k, dim=1).indices == 0).any(dim=1).float()
         return hit.mean().item()
 
