@@ -17,6 +17,7 @@ class StreamDataset(IterableDataset):
                  dt_emb_path, kt_emb_path,
                  dt_feat_path, kt_feat_path,
                  unique_kt_path,
+                 neg_weights_path, num_negs,
                  label_column="label", chunk_size=10000):
         self.parquet_files = sorted(glob.glob(os.path.join(parquet_dir, "*.parquet")))
         self.chunk_size = chunk_size
@@ -32,6 +33,9 @@ class StreamDataset(IterableDataset):
         self.dt_feat = self._load_pickle(dt_feat_path)
         self.kt_feat = self._load_pickle(kt_feat_path)
         self.unique_kt = self._load_pickle(unique_kt_path)
+        self.neg_inns, self.neg_weights = self._load_pickle(neg_weights_path)
+        self.neg_prob_by_kt = dict(zip(self.neg_inns, self.neg_weights))
+        self.num_negs = num_negs
 
     def _load_pickle(self, path):
         with gzip.open(path, "rb") as f:
