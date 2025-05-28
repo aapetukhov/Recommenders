@@ -154,9 +154,6 @@ class DeepFM(nn.Module):
         u_dt, dt_weights = self.embed_user(user, double_user, dt_emb)
         u_kt, kt_weights = self.embed_item(item, double_item, kt_emb)
 
-        u_dt = F.normalize(u_dt, dim=-1)
-        u_kt = F.normalize(u_kt, dim=-1)
-
         return {
             "logits": (u_kt * u_dt).sum(dim=1),
             "kt_weights": kt_weights,
