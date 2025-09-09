@@ -61,7 +61,7 @@ class FeatureEmbedding(nn.Module):
         for i, feat_name in enumerate(self.embeddings):
             try:
                 embedded.append(self.embeddings[feat_name](x[:, i]))
-            except:
+            except ValueError as e:
                 print(f"ERROR WITH {feat_name}")
                 raise ValueError("NOOOO...")
 
@@ -82,7 +82,7 @@ class FeatureProjection(nn.Module):
         for i, (proj, feat) in enumerate(zip(self.projections, embedded_features)):
             try:
                 projected.append(proj(feat))
-            except:
+            except ValueError as e:
                 print(f"ERROR WITH FEATURE {i}")
                 raise ValueError("NOOOO...")
         
@@ -153,6 +153,9 @@ class DeepFM(nn.Module):
         """
         u_dt, dt_weights = self.embed_user(user, double_user, dt_emb)
         u_kt, kt_weights = self.embed_item(item, double_item, kt_emb)
+
+        # u_dt = F.normalize(u_dt, dim=-1)
+        # u_kt = F.normalize(u_kt, dim=-1)
 
         return {
             "logits": (u_kt * u_dt).sum(dim=1),
