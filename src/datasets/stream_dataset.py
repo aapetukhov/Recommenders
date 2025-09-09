@@ -81,8 +81,9 @@ class StreamDataset(IterableDataset):
             "double_item": torch.tensor([kt_data.get(f, 0.0) for f in self.kt_double_features], dtype=torch.float32),
         }
 
-  
+
     def make_bpr_sample(self, inn_dt, inn_kt_pos, inn_kt_neg):
+        # TODO: найти узкие места в производительности
         # positives arrive as raw inn strings
         dt_data = self.dt_feat.get(self.inn_dt_to_index[inn_dt], {})
         kt_data_pos = self.kt_feat.get(self.inn_kt_to_index[inn_kt_pos], {})
