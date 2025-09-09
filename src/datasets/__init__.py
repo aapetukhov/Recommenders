@@ -1,3 +1,3 @@
-from .stream_dataset import StreamDataset
+from src.datasets.stream_dataset import StreamDataset
 
-all = ["ExampleDataset", "StreamDataset"]
+all = ["StreamDataset"]
