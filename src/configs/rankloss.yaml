@@ -24,7 +24,7 @@ lr_scheduler:
   anneal_strategy: cos
 
 loss_function:
-  _target_: src.loss.LogitsBCELoss
+  _target_: src.loss.BPRLoss
 
 trainer:
   log_step: 2000
