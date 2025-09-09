@@ -56,7 +56,6 @@ class FeatureEmbedding(nn.Module):
         }
 
     def forward(self, x):
-
         embedded = []
         for i, feat_name in enumerate(self.embeddings):
             try:
@@ -85,7 +84,7 @@ class FeatureProjection(nn.Module):
             except ValueError as e:
                 print(f"ERROR WITH FEATURE {i}")
                 raise ValueError("NOOOO...")
-        
+
         return torch.stack(projected, dim=1)  # (batch_size, num_features, output_dim)
 
 
@@ -118,14 +117,14 @@ class DeepFM(nn.Module):
             nn.BatchNorm1d(num_user_double_feats, affine=False),
             nn.Linear(num_user_double_feats, embed_dim),
             nn.BatchNorm1d(embed_dim),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         self.item_double_proj = nn.Sequential(
             nn.BatchNorm1d(num_item_double_feats, affine=False),
             nn.Linear(num_item_double_feats, embed_dim),
             nn.BatchNorm1d(embed_dim),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         self.user_attention = AttentionLayer(embed_dim)
@@ -135,18 +134,19 @@ class DeepFM(nn.Module):
             nn.BatchNorm1d(256, affine=False),
             nn.Linear(256, embed_dim),
             nn.BatchNorm1d(embed_dim),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
         self.kt_emb_proj = nn.Sequential(
             nn.BatchNorm1d(256, affine=False),
             nn.Linear(256, embed_dim),
             nn.BatchNorm1d(embed_dim),
-            nn.ReLU()
+            nn.ReLU(),
         )
 
-
-    def forward(self, item, user, double_item, double_user, dt_emb=None, kt_emb=None, **batch):
+    def forward(
+        self, item, user, double_item, double_user, dt_emb=None, kt_emb=None, **batch
+    ):
         """
         User = dt
         Item = kt
@@ -162,7 +162,6 @@ class DeepFM(nn.Module):
             "kt_weights": kt_weights,
             "dt_weights": dt_weights,
         }
-
 
     def embed_user(self, user, double_user, dt_emb=None):
         """
@@ -180,7 +179,6 @@ class DeepFM(nn.Module):
         u_dt, weights = self.user_attention(x)
         return u_dt, weights
 
-
     def embed_item(self, item, double_item, kt_emb=None):
         """
         Separate network to embed item (kt).
@@ -196,7 +194,6 @@ class DeepFM(nn.Module):
         x = torch.cat(parts, dim=1)  # (B, n+1 [+1], d)
         u_kt, weights = self.item_attention(x)
         return u_kt, weights
-
 
     def __str__(self):
         """
