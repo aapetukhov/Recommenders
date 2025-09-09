@@ -61,7 +61,7 @@ class FeatureEmbedding(nn.Module):
         for i, feat_name in enumerate(self.embeddings):
             try:
                 embedded.append(self.embeddings[feat_name](x[:, i]))
-            except:
+            except ValueError as e:
                 print(f"ERROR WITH {feat_name}")
                 raise ValueError("NOOOO...")
 
@@ -82,9 +82,9 @@ class FeatureProjection(nn.Module):
         for i, (proj, feat) in enumerate(zip(self.projections, embedded_features)):
             try:
                 projected.append(proj(feat))
-            except:
+            except ValueError as e:
                 print(f"ERROR WITH FEATURE {i}")
-                raise ValueError("NOOOO...")
+                raise ValueError("!!!!!!!!!!!!!!!!!!!!!!!!!!!")
         
         return torch.stack(projected, dim=1)  # (batch_size, num_features, output_dim)
 
@@ -146,18 +146,37 @@ class DeepFM(nn.Module):
         )
 
 
-    def forward(self, item, user, double_item, double_user, dt_emb=None, kt_emb=None, **batch):
+    def forward(
+        self,
+        # user
+        user, double_user, dt_emb,
+        # item pos
+        item_pos, double_item_pos, kt_emb_pos,
+        # item neg
+        item_neg, double_item_neg, kt_emb_neg,
+        **batch
+    ):
         """
         User = dt
         Item = kt
         """
         u_dt, dt_weights = self.embed_user(user, double_user, dt_emb)
-        u_kt, kt_weights = self.embed_item(item, double_item, kt_emb)
+        
+        # concatenate positive and negative for faster calculation
+        item_cat = torch.cat([item_pos, item_neg], dim=0)
+        double_item_cat = torch.cat([double_item_pos, double_item_neg], dim=0)
+        kt_emb_cat = torch.cat([kt_emb_pos, kt_emb_neg], dim=0)
+
+        u_kt_cat, kt_weights_cat = self.embed_item(item_cat, double_item_cat, kt_emb_cat)
+        B = user.size(0)
+        
+        u_kt_pos, u_kt_neg = torch.split(u_kt_cat, [B, B], dim=0)
+        kt_weights_pos, kt_weights_neg = torch.split(kt_weights_cat, [B, B], dim=0)
 
         return {
-            "logits": (u_kt * u_dt).sum(dim=1),
-            "kt_weights": kt_weights,
-            "dt_weights": dt_weights,
+            "embedding_user": u_dt, "dt_weights": dt_weights,
+            "embedding_item_pos": u_kt_pos, "kt_weights_pos": kt_weights_pos,
+            "embedding_item_neg": u_kt_neg, "kt_weights_neg": kt_weights_neg,
         }
 
 
