@@ -1,0 +1,122 @@
+train:
+  _target_: src.datasets.StreamDataset
+  parquet_dir: /home/datalab/nfs/deepfm/data/train_21/arnsdpsbx_t_team_fin_adviser.train_interactions
+  # parquet_dir: /home/datalab/nfs/deepfm/data/train_21/arnsdpsbx_t_team_fin_adviser.test_interactions
+
+
+  kt_emb_path: /home/datalab/nfs/deepfm/data/train_21/kt_embeddings_dict.pkl.gz
+  dt_emb_path: /home/datalab/nfs/deepfm/data/train_21/dt_embeddings_dict.pkl.gz
+
+  kt_feat_path: /home/datalab/nfs/deepfm/data/train_21/kt_features_dict.pkl.gz
+  dt_feat_path: /home/datalab/nfs/deepfm/data/train_21/dt_features_dict.pkl.gz
+
+  unique_kt_path: /home/datalab/nfs/deepfm/data/train_21/unique_inn_kt.pkl.gz
+  unique_dt_path: /home/datalab/nfs/deepfm/data/train_21/unique_inn_dt.pkl.gz
+
+  inn_kt_to_idx_path: /home/datalab/nfs/deepfm/data/train_21/inn_kt_to_index.pkl.gz
+  inn_dt_to_idx_path: /home/datalab/nfs/deepfm/data/train_21/inn_dt_to_index.pkl.gz
+  # passed as list
+  dt_features:
+    - "inn_dt_index"
+    - "okved_cd_dt_index"
+    - "okato_cd_dt_index"
+    - "bic_dt_34_index"
+    - "bic_dt_56_index"
+    - "bic_dt_79_index"
+    - "num_dt_13_index"
+    - "num_dt_45_index"
+    - "num_dt_68_index"
+    - "okved_cd_dt_lvl1_index"
+    - "okved_cd_dt_lvl2_index"
+    - "okved_cd_dt_lvl3_index"
+  kt_features:
+    - "inn_kt_index"
+    - "okved_cd_kt_index"
+    - "okato_cd_kt_index"
+    - "bic_kt_34_index"
+    - "bic_kt_56_index"
+    - "bic_kt_79_index"
+    - "num_kt_13_index"
+    - "num_kt_45_index"
+    - "num_kt_68_index"
+    - "okved_cd_kt_lvl1_index"
+    - "okved_cd_kt_lvl2_index"
+    - "okved_cd_kt_lvl3_index"
+  kt_double_features:
+    - "kt_avg_sum"
+    - "kt_stddev_sum"
+    - "kt_min_sum"
+    - "kt_max_sum"
+    - "kt_median_sum"
+    - "kt_skewness_sum"
+    - "kt_buyers_count"
+  dt_double_features:
+    - "dt_avg_sum"
+    - "dt_stddev_sum"
+    - "dt_min_sum"
+    - "dt_max_sum"
+    - "dt_median_sum"
+    - "dt_skewness_sum"
+    - "dt_buyers_count"
+  label_column: "label"
+  chunk_size: 4096
+
+val:
+  _target_: src.datasets.StreamDataset
+  parquet_dir: /home/datalab/nfs/deepfm/data/train_21/arnsdpsbx_t_team_fin_adviser.test_interactions
+
+  kt_emb_path: /home/datalab/nfs/deepfm/data/train_21/kt_embeddings_dict.pkl.gz
+  dt_emb_path: /home/datalab/nfs/deepfm/data/train_21/dt_embeddings_dict.pkl.gz
+
+  kt_feat_path: /home/datalab/nfs/deepfm/data/train_21/kt_features_dict.pkl.gz
+  dt_feat_path: /home/datalab/nfs/deepfm/data/train_21/dt_features_dict.pkl.gz
+
+  unique_kt_path: /home/datalab/nfs/deepfm/data/train_21/unique_inn_kt.pkl.gz
+  unique_dt_path: /home/datalab/nfs/deepfm/data/train_21/unique_inn_dt.pkl.gz
+
+  inn_kt_to_idx_path: /home/datalab/nfs/deepfm/data/train_21/inn_kt_to_index.pkl.gz
+  inn_dt_to_idx_path: /home/datalab/nfs/deepfm/data/train_21/inn_dt_to_index.pkl.gz
+  dt_features:
+    - "inn_dt_index"
+    - "okved_cd_dt_index"
+    - "okato_cd_dt_index"
+    - "bic_dt_34_index"
+    - "bic_dt_56_index"
+    - "bic_dt_79_index"
+    - "num_dt_13_index"
+    - "num_dt_45_index"
+    - "num_dt_68_index"
+    - "okved_cd_dt_lvl1_index"
+    - "okved_cd_dt_lvl2_index"
+    - "okved_cd_dt_lvl3_index"
+  kt_features:
+    - "inn_kt_index"
+    - "okved_cd_kt_index"
+    - "okato_cd_kt_index"
+    - "bic_kt_34_index"
+    - "bic_kt_56_index"
+    - "bic_kt_79_index"
+    - "num_kt_13_index"
+    - "num_kt_45_index"
+    - "num_kt_68_index"
+    - "okved_cd_kt_lvl1_index"
+    - "okved_cd_kt_lvl2_index"
+    - "okved_cd_kt_lvl3_index"
+  kt_double_features:
+    - "kt_avg_sum"
+    - "kt_stddev_sum"
+    - "kt_min_sum"
+    - "kt_max_sum"
+    - "kt_median_sum"
+    - "kt_skewness_sum"
+    - "kt_buyers_count"
+  dt_double_features:
+    - "dt_avg_sum"
+    - "dt_stddev_sum"
+    - "dt_min_sum"
+    - "dt_max_sum"
+    - "dt_median_sum"
+    - "dt_skewness_sum"
+    - "dt_buyers_count"
+  label_column: "label"
+  chunk_size: 4096

@@ -1,6 +1,6 @@
 defaults:
   - writer: tensorboard
-  - metrics: default
+  - metrics: no_metrics
   - datasets: transactions_21
   - dataloader: default
   - transforms: example
@@ -24,18 +24,18 @@ lr_scheduler:
   anneal_strategy: cos
 
 loss_function:
-  _target_: src.loss.LogitsBCELoss
+  _target_: src.loss.BPRLoss
 
 trainer:
   log_step: 2000
-  n_epochs: 2
+  n_epochs: 1
   # epoch_len: null
-  device_tensors: ["user", "item", "label", "double_user", "double_item", "kt_emb", "dt_emb"] # which tensors should be on device (ex. GPU)
+  device_tensors: ["user", "double_user", "dt_emb", "item_pos", "double_item_pos", "kt_emb_pos", "item_neg", "double_item_neg", "kt_emb_neg"] # which tensors should be on device (ex. GPU)
   resume_from: null # null or path to the checkpoint dir with *.pth and config.yaml
   device: auto # device name or "auto"
   override: True # if True, will override the previous run with the same name
   monitor: "min val_loss" # "off" or "max/min metric_name", i.e. our goal is to maximize/minimize metric
-  save_period: 10 # checkpoint each save_period epochs in addition to the best epoch
+  save_period: 1 # checkpoint each save_period epochs in addition to the best epoch
   early_stop: ${trainer.n_epochs} # epochs for early stopping
   save_dir: "deepfm_logs" # directory to save logs and checkpoints
   seed: 1
