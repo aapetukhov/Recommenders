@@ -78,13 +78,13 @@ class Trainer(BaseTrainer):
         else:
             self.log_attention_weights(mode, **batch)
 
-    def log_attention_weights(self, mode, kt_weights, dt_weights, **batch):
-        if kt_weights is None or dt_weights is None:
+    def log_attention_weights(self, mode, kt_weights_pos, dt_weights, **batch):
+        if kt_weights_pos is None or dt_weights is None:
             return
         batch_size = self.evaluation_dataloaders["val"].batch_size
         idx = 0
 
-        user_w = kt_weights[idx].detach().cpu().numpy().reshape(1, -1)
+        user_w = kt_weights_pos[idx].detach().cpu().numpy().reshape(1, -1)
         item_w = dt_weights[idx].detach().cpu().numpy().reshape(1, -1)
 
         self.writer.add_image(f"{mode}/user_attention", plot_tensor_to_tb("user_attention", user_w))
