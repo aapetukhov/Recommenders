@@ -43,6 +43,7 @@ def main(config):
     # setup data_loader instances
     # batch_transforms should be put on device
     dataloaders, batch_transforms = get_dataloaders(config, device)
+    logger.info("\nINITIALIZED DATASETS\n")
 
     # build model architecture, then print to console
     # TODO: need to pass sizes when init
@@ -68,10 +69,9 @@ def main(config):
     optimizer = instantiate(config.optimizer, params=trainable_params)
 
     # build learning rate scheduler
-    # epoch_len = compute_epoch_len(dataloaders["train"])
-    epoch_len = 21926
-    # epoch_len = 6460
-    # epoch_len = 333
+    epoch_len = compute_epoch_len(dataloaders["train"])
+    # epoch_len = 13483 # length of train_19
+    # epoch_len = 21926 #length of train_11
     logger.info(f"\033[1;34m{'=' * 10} Epoch length: {epoch_len} steps {'=' * 10}\033[0m")
     lr_scheduler = instantiate(config.lr_scheduler, optimizer=optimizer, steps_per_epoch=epoch_len)
 
