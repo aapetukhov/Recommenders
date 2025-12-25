@@ -6,6 +6,8 @@ train:
 
   kt_emb_path: /home/datalab/nfs/deepfm/data/train_21/kt_embeddings_dict.pkl.gz
   dt_emb_path: /home/datalab/nfs/deepfm/data/train_21/dt_embeddings_dict.pkl.gz
+  kt_topic_emb_path: /home/datalab/nfs/deepfm/data/train_21/kt_topic_embeddings_dict.pkl.gz
+  dt_topic_emb_path: /home/datalab/nfs/deepfm/data/train_21/dt_topic_embeddings_dict.pkl.gz
 
   kt_feat_path: /home/datalab/nfs/deepfm/data/train_21/kt_features_dict.pkl.gz
   dt_feat_path: /home/datalab/nfs/deepfm/data/train_21/dt_features_dict.pkl.gz
@@ -67,6 +69,8 @@ val:
 
   kt_emb_path: /home/datalab/nfs/deepfm/data/train_21/kt_embeddings_dict.pkl.gz
   dt_emb_path: /home/datalab/nfs/deepfm/data/train_21/dt_embeddings_dict.pkl.gz
+  kt_topic_emb_path: /home/datalab/nfs/deepfm/data/train_21/kt_topic_embeddings_dict.pkl.gz
+  dt_topic_emb_path: /home/datalab/nfs/deepfm/data/train_21/dt_topic_embeddings_dict.pkl.gz
 
   kt_feat_path: /home/datalab/nfs/deepfm/data/train_21/kt_features_dict.pkl.gz
   dt_feat_path: /home/datalab/nfs/deepfm/data/train_21/dt_features_dict.pkl.gz

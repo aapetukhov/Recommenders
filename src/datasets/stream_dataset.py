@@ -11,14 +11,26 @@ import pyarrow.parquet as pq
 
 
 class StreamDataset(IterableDataset):
-    def __init__(self, parquet_dir,
-                 dt_features, dt_double_features,
-                 kt_features, kt_double_features,
-                 dt_emb_path, kt_emb_path,
-                 dt_feat_path, kt_feat_path,
-                 inn_dt_to_idx_path, inn_kt_to_idx_path, 
-                 unique_kt_path, unique_dt_path,
-                 label_column="label", chunk_size=4096*2):
+    def __init__(
+        self,
+        parquet_dir,
+        dt_features,
+        dt_double_features,
+        kt_features,
+        kt_double_features,
+        dt_emb_path,
+        kt_emb_path,
+        dt_feat_path,
+        kt_feat_path,
+        inn_dt_to_idx_path,
+        inn_kt_to_idx_path,
+        unique_kt_path,
+        unique_dt_path,
+        dt_topic_emb_path=None,
+        kt_topic_emb_path=None,
+        label_column="label",
+        chunk_size=4096 * 2,
+    ):
         self.parquet_files = sorted(glob.glob(os.path.join(parquet_dir, "*.parquet")))
         self.chunk_size = chunk_size
 
@@ -40,9 +52,27 @@ class StreamDataset(IterableDataset):
         self.inn_kt_to_index = self._load_pickle(inn_kt_to_idx_path)
         self.inn_dt_to_index = self._load_pickle(inn_dt_to_idx_path)
 
+        self.dt_topic_emb = self._load_optional_pickle(dt_topic_emb_path)
+        self.kt_topic_emb = self._load_optional_pickle(kt_topic_emb_path)
+        self.dt_topic_dim = self._infer_topic_dim(self.dt_topic_emb)
+        self.kt_topic_dim = self._infer_topic_dim(self.kt_topic_emb)
+        self.dt_topic_default = np.zeros(self.dt_topic_dim, dtype=np.float32) if self.dt_topic_dim else None
+        self.kt_topic_default = np.zeros(self.kt_topic_dim, dtype=np.float32) if self.kt_topic_dim else None
+
     def _load_pickle(self, path):
         with gzip.open(path, "rb") as f:
             return pickle.load(f)
+
+    def _load_optional_pickle(self, path):
+        if path is None:
+            return {}
+        return self._load_pickle(path)
+
+    def _infer_topic_dim(self, table):
+        if not table:
+            return 0
+        first_key = next(iter(table))
+        return len(table[first_key])
 
     def parse_data(self, chunk):
         for _, row in chunk.iterrows():
@@ -66,7 +96,7 @@ class StreamDataset(IterableDataset):
         dt_data = self.dt_feat.get(self.inn_dt_to_index[inn_dt], {})
         kt_data = self.kt_feat.get(self.inn_kt_to_index[inn_kt], {})
 
-        return {
+        sample = {
             "label": torch.tensor(label, dtype=torch.float32),
             "dt_emb": torch.tensor(self.dt_emb.get(self.inn_dt_to_index[inn_dt], np.zeros(256)), dtype=torch.float32),
             "kt_emb": torch.tensor(self.kt_emb.get(self.inn_kt_to_index[inn_kt], np.zeros(256)), dtype=torch.float32),
@@ -75,6 +105,18 @@ class StreamDataset(IterableDataset):
             "item": torch.tensor([kt_data.get(f, 0) for f in self.kt_features], dtype=torch.long),
             "double_item": torch.tensor([kt_data.get(f, 0.0) for f in self.kt_double_features], dtype=torch.float32),
         }
+
+        if self.dt_topic_dim:
+            dt_idx = self.inn_dt_to_index[inn_dt]
+            dt_topic_vec = self.dt_topic_emb.get(dt_idx, self.dt_topic_default)
+            sample["dt_topic_emb"] = torch.tensor(dt_topic_vec, dtype=torch.float32)
+
+        if self.kt_topic_dim:
+            kt_idx = self.inn_kt_to_index[inn_kt]
+            kt_topic_vec = self.kt_topic_emb.get(kt_idx, self.kt_topic_default)
+            sample["kt_topic_emb"] = torch.tensor(kt_topic_vec, dtype=torch.float32)
+
+        return sample
 
     def __iter__(self):
         for fpath in self.parquet_files:

@@ -26,4 +26,8 @@ def collate_fn(dataset_items: list[dict]):
         "kt_emb": torch.stack([x["kt_emb"] for x in dataset_items]),
         "dt_emb": torch.stack([x["dt_emb"] for x in dataset_items]),
     }
+    if "dt_topic_emb" in dataset_items[0]:
+        batch["dt_topic_emb"] = torch.stack([x["dt_topic_emb"] for x in dataset_items])
+    if "kt_topic_emb" in dataset_items[0]:
+        batch["kt_topic_emb"] = torch.stack([x["kt_topic_emb"] for x in dataset_items])
     return batch
