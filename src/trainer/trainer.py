@@ -1,11 +1,10 @@
-import random
-
 import pandas as pd
 import torch
+import random
 
-from src.logger.utils import plot_tensor_to_tb
 from src.metrics.tracker import MetricTracker
 from src.trainer.base_trainer import BaseTrainer
+from src.logger.utils import plot_tensor_to_tb
 
 
 class Trainer(BaseTrainer):
@@ -88,9 +87,5 @@ class Trainer(BaseTrainer):
         user_w = kt_weights[idx].detach().cpu().numpy().reshape(1, -1)
         item_w = dt_weights[idx].detach().cpu().numpy().reshape(1, -1)
 
-        self.writer.add_image(
-            f"{mode}/user_attention", plot_tensor_to_tb("user_attention", user_w)
-        )
-        self.writer.add_image(
-            f"{mode}/item_attention", plot_tensor_to_tb("item_attention", item_w)
-        )
+        self.writer.add_image(f"{mode}/user_attention", plot_tensor_to_tb("user_attention", user_w))
+        self.writer.add_image(f"{mode}/item_attention", plot_tensor_to_tb("item_attention", item_w))
