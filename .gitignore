@@ -118,7 +118,7 @@ __MACOSX/
 *.pt
 
 # notebooks
-*.ipynb
+# *.ipynb
 
 #DS store
 *.DS_Store
