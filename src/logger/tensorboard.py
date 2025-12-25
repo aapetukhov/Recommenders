@@ -4,8 +4,8 @@ from logging import Logger
 import numpy as np
 import pandas as pd
 import torch
-from tensorboard import program
 from torch.utils.tensorboard import SummaryWriter
+from tensorboard import program
 
 
 class TensorBoardWriter:

@@ -9,8 +9,8 @@ from torch.utils.data import IterableDataset
 from tqdm.auto import tqdm
 
 from src.datasets.data_utils import inf_loop
-from src.logger.tensorboard import TensorBoardWriter
 from src.logger.wandb import WandBWriter
+from src.logger.tensorboard import TensorBoardWriter
 from src.metrics.tracker import MetricTracker
 from src.utils.io_utils import ROOT_PATH
 

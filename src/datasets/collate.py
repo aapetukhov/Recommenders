@@ -21,9 +21,11 @@ def collate_fn(dataset_items: list[dict]):
         "user": torch.stack([x["user"] for x in dataset_items]),
         "double_user": torch.stack([x["double_user"] for x in dataset_items]),
         "dt_emb": torch.stack([x["dt_emb"] for x in dataset_items]),
+
         "item_pos": torch.stack([x["item_pos"] for x in dataset_items]),
         "double_item_pos": torch.stack([x["double_item_pos"] for x in dataset_items]),
         "kt_emb_pos": torch.stack([x["kt_emb_pos"] for x in dataset_items]),
+
         "item_neg": torch.stack([x["item_neg"] for x in dataset_items]),
         "double_item_neg": torch.stack([x["double_item_neg"] for x in dataset_items]),
         "kt_emb_neg": torch.stack([x["kt_emb_neg"] for x in dataset_items]),
