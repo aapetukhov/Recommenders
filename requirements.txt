@@ -11,6 +11,7 @@ pandas
 wandb
 hydra-core
 einops
+annoy
 
 black
 isort
