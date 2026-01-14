@@ -31,6 +31,7 @@ train:
     - "okved_cd_dt_lvl1_index"
     - "okved_cd_dt_lvl2_index"
     - "okved_cd_dt_lvl3_index"
+    - "okved_cd_dt_lvl4_index"
   kt_features:
     - "inn_kt_index"
     - "okved_cd_kt_index"
@@ -44,6 +45,7 @@ train:
     - "okved_cd_kt_lvl1_index"
     - "okved_cd_kt_lvl2_index"
     - "okved_cd_kt_lvl3_index"
+    - "okved_cd_kt_lvl4_index"
   kt_double_features:
     - "kt_avg_sum"
     - "kt_stddev_sum"
@@ -93,6 +95,7 @@ val:
     - "okved_cd_dt_lvl1_index"
     - "okved_cd_dt_lvl2_index"
     - "okved_cd_dt_lvl3_index"
+    - "okved_cd_dt_lvl4_index"
   kt_features:
     - "inn_kt_index"
     - "okved_cd_kt_index"
@@ -106,6 +109,7 @@ val:
     - "okved_cd_kt_lvl1_index"
     - "okved_cd_kt_lvl2_index"
     - "okved_cd_kt_lvl3_index"
+    - "okved_cd_kt_lvl4_index"
   kt_double_features:
     - "kt_avg_sum"
     - "kt_stddev_sum"
