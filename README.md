@@ -66,6 +66,32 @@
 6. Через `recommendations_from_embeddings.ipynb` построить Annoy/FAISS индекс и выгрузить top-k кандидатов.
 7. Через `recommenders_metrics.ipynb` посчитать метрики и сравнить с бенчмарком.
 
+## Обучение в обратном направлении (kt → dt)
+Модель теперь может обучаться зеркально — когда пользовательская башня отвечает за kt, а айтем-башня за dt. Для этого добавлены параллельные сущности:
+
+- `src/datasets/stream_dataset_reverse.py` (`StreamDatasetReverse`) — тот же потоковый датасет, но негативы берутся из `unique_dt`, а признаковые тензоры/эмбеддинги переставлены местами (user=kt, item=dt).
+- `src/models/deepfm_reverse.py` (`DeepFMReverse`) — копия архитектуры `DeepFM`, где пользовательская ветка работает с kt-фичами, а товарная — с dt.
+- `src/loss/bceloss_reverse.py` (`LogitsBCELossReverse`) — отдельная Hydra-цель для лосса, чтобы конфиг можно было переключать без изменения базовой версии.
+- Конфиги Hydra: `src/configs/datasets/transactions_21_reverse.yaml`, `src/configs/model/deepfm_reverse.yaml`, `src/configs/test_reverse.yaml`.
+- Конфиг Spark-джобы: `notebooks/make_dataset_scripts/config_reverse.yaml` (создаёт копию всех паркетов и словарей с суффиксом `_reverse`, чтобы не затирать прямое направление).
+
+> **Можно ли переиспользовать существующие данные?** Да. Паркет с интеракциями и подготовленные словари содержат обе роли (`inn_dt`, `inn_kt`), поэтому мы просто меняем трактовку пользователя/товара. Отдельный `config_reverse.yaml` нужен только если хочется собрать независимый набор артефактов, иначе достаточно указать уже существующие пути в Hydra-конфигах.
+
+### Как запустить
+1. (Опционально) Соберите входные паркет/словарные файлы под другим `save_schema`, выполнив `notebooks/make_dataset_scripts/run.ipynb` с `config_reverse.yaml`, затем `process_data.ipynb`.
+2. Запустите обучение:
+   ```bash
+   python3 train.py --config-name test_reverse \
+     trainer.n_epochs=5 \
+     trainer.log_step=1000 \
+     data.user_feature_sizes_path=/path/to/item_feature_sizes.json \
+     data.item_feature_sizes_path=/path/to/user_feature_sizes.json \
+     datasets=transactions_21_reverse \
+     model.embed_dim=128 \
+     optimizer.lr=3e-4
+   ```
+3. Все остальные шаги инференса/съёма эмбеддингов идентичны: необходимо только указывать обратные словари (kt как пользователи) в ноутбуках `collect_embeddings.ipynb` и `recommendations_from_embeddings.ipynb`.
+
 ## Направления для улучшения и автоматизации
 1. **Убрать зависимость от ноутбуков**:
    - `notebooks/make_dataset_scripts/run.ipynb` и `process_data.ipynb` содержат чистый PySpark/Pandas код, а конфиг уже вынесен в YAML. Их можно перенести в модуль `src/pipelines/datasets/{prepare,pack}.py` с CLI (`python3 -m src.pipelines.datasets.prepare +config=config.yaml`), чтобы запускалось как регулярная Spark-джоба и попадало в планировщик (Airflow, Oozie).

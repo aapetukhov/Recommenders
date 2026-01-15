@@ -41,6 +41,8 @@ class StreamDatasetReverse(IterableDataset):
         chunk_size=4096 * 2,
     ):
         self.parquet_files = sorted(glob.glob(os.path.join(parquet_dir, "*.parquet")))
+        self.num_rows = sum(pq.ParquetFile(f).metadata.num_rows for f in self.parquet_files)
+        self.samples_per_row = 2
         self.chunk_size = chunk_size
 
         self.dt_features = dt_features

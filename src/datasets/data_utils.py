@@ -1,9 +1,12 @@
 import torch
+import math
 from itertools import repeat
 
 from hydra.utils import instantiate
 
 from src.datasets.collate import collate_fn
+from src.datasets.stream_dataset_reverse import StreamDatasetReverse
+from src.datasets.stream_dataset import StreamDataset
 from src.utils.init_utils import set_worker_seed
 
 
@@ -86,15 +89,12 @@ def get_dataloaders(config, device):
     return dataloaders, batch_transforms
 
 def compute_epoch_len(dataloader):
-    if isinstance(dataloader.dataset, torch.utils.data.IterableDataset):
-        length = 0
-        for _ in dataloader:
-            length += 1
-            if length % 1000 == 0:
-                print(f"WAIT FOR NOW. COUNTED (in batches): {length}")
-        # length = sum(1 for _ in dataloader)
-        print(f"Length of the dataset (in batches): {length}")
-        return length
+    dataset = dataloader.dataset
+    if isinstance(dataset, (StreamDataset, StreamDataset)) and getattr(dataset, "num_rows", 0):
+        total_samples = dataset.num_rows * dataset.samples_per_row
+        batch = dataloader.batch_size or 1
+        drop = getattr(dataloader, "drop_last", False)
+        return total_samples // batch if drop else math.ceil(total_samples / batch)
     
     print(f"Lenght of the dataset (in batches): {len(dataloader)}")
     return len(dataloader)
