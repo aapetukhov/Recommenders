@@ -1,0 +1,40 @@
+defaults:
+  - writer: tensorboard
+  - metrics: default
+  - datasets: transactions_21_reverse
+  - dataloader: default
+  - transforms: example
+  - model: deepfm_reverse
+  - _self_
+
+data:
+  user_feature_sizes_path: /home/datalab/nfs/deepfm/data/train_21/item_feature_sizes.json
+  item_feature_sizes_path: /home/datalab/nfs/deepfm/data/train_21/user_feature_sizes.json
+
+optimizer:
+  _target_: torch.optim.AdamW
+  lr: 3e-4
+
+lr_scheduler:
+  _target_: torch.optim.lr_scheduler.OneCycleLR
+  max_lr: 0.0005
+  pct_start: 0.1
+  epochs: ${trainer.n_epochs}
+  anneal_strategy: cos
+
+loss_function:
+  _target_: src.loss.LogitsBCELossReverse
+
+trainer:
+  log_step: 2000
+  n_epochs: 2
+  device_tensors: ["user", "item", "label", "double_user", "double_item", "kt_emb", "dt_emb", "kt_topic_emb", "dt_topic_emb"]
+  resume_from: null
+  device: auto
+  override: True
+  monitor: "min val_loss"
+  save_period: 10
+  early_stop: ${trainer.n_epochs}
+  save_dir: "deepfm_logs"
+  seed: 1
+  max_grad_norm: 8

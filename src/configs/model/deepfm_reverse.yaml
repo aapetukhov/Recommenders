@@ -1,0 +1,6 @@
+_target_: src.models.DeepFMReverse
+embed_dim: 128
+num_user_double_feats: 7
+num_item_double_feats: 7
+num_user_topic_embeds: 50
+num_item_topic_embeds: 50
