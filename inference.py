@@ -1,74 +1,48 @@
-import warnings
+import logging
+from pathlib import Path
 
 import hydra
-import torch
-from hydra.utils import instantiate
+from omegaconf import DictConfig, OmegaConf
 
-from src.datasets.data_utils import get_dataloaders
-from src.trainer import Inferencer
-from src.utils.init_utils import set_random_seed
+from src.pipelines import run_offline_inference
 from src.utils.io_utils import ROOT_PATH
 
-warnings.filterwarnings("ignore", category=UserWarning)
+
+def _configure_logging():
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(asctime)s] %(levelname)s - %(message)s",
+    )
+    logging.getLogger("annoy").setLevel(logging.WARNING)
 
 
 @hydra.main(version_base=None, config_path="src/configs", config_name="inference")
-def main(config):
+def main(cfg: DictConfig) -> None:
     """
-    Main script for inference. Instantiates the model, metrics, and
-    dataloaders. Runs Inferencer to calculate metrics and (or)
-    save predictions.
-
-    Args:
-        config (DictConfig): hydra experiment config.
+    Entry point for running offline inference and metric computation.
     """
-    set_random_seed(config.inferencer.seed)
 
-    if config.inferencer.device == "auto":
-        device = "cuda" if torch.cuda.is_available() else "cpu"
-    else:
-        device = config.inferencer.device
+    _configure_logging()
 
-    # setup text_encoder
-    text_encoder = instantiate(config.text_encoder)
+    logging.info("Starting offline inference with config:\n%s", OmegaConf.to_yaml(cfg))
 
-    # setup data_loader instances
-    # batch_transforms should be put on device
-    dataloaders, batch_transforms = get_dataloaders(config, text_encoder, device)
+    artifacts = run_offline_inference(cfg)
 
-    # build model architecture, then print to console
-    model = instantiate(config.model).to(device)
-    print(model)
+    logging.info("Finished inference. Aggregated metrics:")
+    for metric_name, value in artifacts.metrics.items():
+        logging.info("  %s = %.4f", metric_name, value)
 
-    # get metrics
-    metrics = {"inference": []}
-    for metric_config in config.metrics.get("inference", []):
-        # use text_encoder in metrics
-        metrics["inference"].append(
-            instantiate(metric_config)
-        )
+    logging.info("Artifacts are stored under %s", _resolve_output_root(cfg))
 
-    # save_path for model predictions
-    save_path = ROOT_PATH / "data" / "saved" / config.inferencer.save_path
-    save_path.mkdir(exist_ok=True, parents=True)
 
-    inferencer = Inferencer(
-        model=model,
-        config=config,
-        device=device,
-        dataloaders=dataloaders,
-        batch_transforms=batch_transforms,
-        save_path=save_path,
-        metrics=metrics,
-        skip_model_load=False,
-    )
-
-    logs = inferencer.run_inference()
-
-    for part in logs.keys():
-        for key, value in logs[part].items():
-            full_key = part + "_" + key
-            print(f"    {full_key:15s}: {value}")
+def _resolve_output_root(cfg: DictConfig) -> Path:
+    output_dir = cfg.inference.io.get("output_dir")
+    if output_dir is None:
+        return ROOT_PATH
+    path = Path(output_dir)
+    if not path.is_absolute():
+        path = (ROOT_PATH / path).resolve()
+    return path
 
 
 if __name__ == "__main__":

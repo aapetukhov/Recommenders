@@ -1,0 +1,47 @@
+defaults:
+  - datasets: transactions_21
+  - model: deepfm
+  - _self_
+
+data:
+  user_feature_sizes_path: /home/datalab/nfs/deepfm/data/train_21/user_feature_sizes.json
+  item_feature_sizes_path: /home/datalab/nfs/deepfm/data/train_21/item_feature_sizes.json
+  test_dict_path: /home/datalab/nfs/deepfm/data/train_21/test_dict.pkl.gz
+
+inference:
+  checkpoint_path: /home/datalab/nfs/deepfm/deepfm_logs/train_21_boevoy_zapusk_vse_fichi/model_best.pth
+  dataset_partition: val
+  user_entity: dt
+  item_entity: kt
+  device: auto
+  batch_size: 2048
+  top_k: 100
+  metrics_k: [10, 50, 100]
+  user_ids_source: test_dict
+  item_ids_source: all
+  save_attentions: false
+  reuse_artifacts: true
+  ann:
+    metric: angular
+    n_trees: 64
+    search_k: -1
+  io:
+    output_dir: data/train_21/offline_inference
+    user_embeddings: ${inference.io.output_dir}/embeddings/${inference.user_entity}_embeddings.pkl.gz
+    item_embeddings: ${inference.io.output_dir}/embeddings/${inference.item_entity}_embeddings.pkl.gz
+    user_attentions: ${inference.io.output_dir}/attentions/${inference.user_entity}_attentions.pkl.gz
+    item_attentions: ${inference.io.output_dir}/attentions/${inference.item_entity}_attentions.pkl.gz
+    recommendations: ${inference.io.output_dir}/recommendations/${inference.user_entity}_to_${inference.item_entity}.pkl.gz
+    metrics: ${inference.io.output_dir}/metrics.json
+  persist:
+    user_embeddings: true
+    item_embeddings: true
+    user_attentions: true
+    item_attentions: true
+    recommendations: true
+    metrics: true
+
+hydra:
+  run:
+    dir: .
+  output_subdir: null

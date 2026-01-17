@@ -50,21 +50,75 @@
 4. Для инференса и пересчёта метрик подготовьте отдельный конфиг `src/configs/inference.yaml` и вызовите `python3 inference.py inferencer.from_pretrained=<ckpt>`.
 
 ## Постобработка, эмбеддинги и выборка кандидатов
-1. **Съём эмбеддингов** (`notebooks/process_results/collect_embeddings.ipynb`):
-   - Загружает обученную модель и словари фичей, прогоняет все dt/kt из тестового словаря и сохраняет 128-мерные эмбеддинги и attention-веса в `../data/<version>/embeddings/*.pkl.gz`.
-2. **Построение ANN-индекса** (`notebooks/make_recommendations/recommendations_from_embeddings.ipynb`):
-   - Сканирует словари эмбеддингов, строит Annoy-индекс (`top_k`, `n_trees` задаются в ноутбуке) и сохраняет рекомендации (`recommendations/*.pkl.gz`). Сейчас это делается только для тестового среза.
-3. **Офлайн-метрики** (`notebooks/make_recommendations/recommenders_metrics.ipynb`):
-   - Берёт `test_dict.pkl.gz`, набор рекомендаций и считает `MAP@k`, `Precision@k`, `Recall@k`, `NDCG@k`. Есть визуализация метрик по k. Это основной инструмент sanity-check перед выкладкой.
+
+> ⚠️ Исторически для этого использовались ноутбуки (`collect_embeddings.ipynb`, `recommendations_from_embeddings.ipynb`, `recommenders_metrics.ipynb`). Они оставлены в репозитории как примеры, но теперь весь поток завернут в скрипт `python inference.py`, поэтому ноутбуки запускать больше не нужно.
+
+1. **Съём эмбеддингов**:
+   - Загружается обученная модель и словари фичей, прогоняются все dt/kt из тестового словаря и сохраняются 128-мерные эмбеддинги и attention-веса в `data/<version>/offline_inference/{embeddings,attentions}`.
+2. **Построение ANN-индекса**:
+   - По эмбеддингам собирается Annoy-индекс (`top_k`, `n_trees`, `search_k` настраиваются в `src/configs/inference.yaml`) и сохраняются рекомендации (`.../recommendations/*.pkl.gz`).
+3. **Офлайн-метрики**:
+   - Скрипт берет `test_dict.pkl.gz`, построенные топы и считает `MAP@k`, `Precision@k`, `Recall@k`, `NDCG@k`, записывая результат в `metrics.json`.
 
 ## Рекомендации по запуску end-to-end
 1. Выполнить `notebooks/make_dataset_scripts/run.ipynb`, передав корректный `config.yaml`, чтобы собрать train/test паркет и словари.
 2. Выполнить `notebooks/make_dataset_scripts/process_data.ipynb`, чтобы упаковать признаки и индексы в `*.pkl.gz`.
 3. Настроить `src/configs/datasets/<dataset>.yaml` так, чтобы оно указывало на свежесгенерированные файлы.
 4. Запустить `train.py` с нужными override-параметрами.
-5. Через `collect_embeddings.ipynb` получить эмбеддинги dt/kt для интересующего множества пользователей (пока только hold-out).
-6. Через `recommendations_from_embeddings.ipynb` построить Annoy/FAISS индекс и выгрузить top-k кандидатов.
-7. Через `recommenders_metrics.ipynb` посчитать метрики и сравнить с бенчмарком.
+5. Запустить `python inference.py` (см. раздел ниже), чтобы за один прогон собрать эмбеддинги, построить ANN-индекс и посчитать офлайн-метрики.
+
+## Единый офлайн-инференс и метрики
+
+Весь поток инференса упакован в модуль `src/pipelines/offline_inference.py`, который вызывается через `python inference.py`. Скрипт выполняет три шага подряд:
+
+1. Загружает обученную модель, выгружает эмбеддинги (и при необходимости attention-веса) для списка пользователей/айтемов, заданных в конфиге.
+2. Строит Annoy-индекс по товарному каталогу и получает топ-k рекомендаций для каждого пользователя.
+3. Считает `MAP@k`, `Recall@k`, `Precision@k`, `NDCG@k` по `test_dict.pkl.gz`, складывая результаты в `metrics.json`.
+
+### Настройка конфига
+- Базовый конфиг лежит в `src/configs/inference.yaml`. Он наследует выбранный датасет (`defaults.datasets`) и модель (`defaults.model`), поэтому достаточно переключить пресеты через Hydra overrides (`datasets=transactions_21_reverse`, `model=deepfm_reverse` и т.д.).
+- Ключевые поля:
+  - `data.*` — пути до `user_feature_sizes.json`, `item_feature_sizes.json` и `test_dict.pkl.gz`.
+  - `inference.checkpoint_path` — `model_best.pth` из `deepfm_logs/<run_name>`.
+  - `inference.user_entity` / `inference.item_entity` — какая сущность проходит через башню пользователя/товара (для reverse-направления выставляем `kt` / `dt` соответственно).
+  - `inference.user_ids_source` / `inference.item_ids_source` — `all`, `test_dict` или путь до `.pkl.gz` со списком id (можно ограничивать прогон под конкретные сегменты).
+  - `inference.io.*` — куда складывать артефакты (`embeddings/*.pkl.gz`, `attentions/*.pkl.gz`, `recommendations/*.pkl.gz`, `metrics.json`). Пути можно переопределять на CLI.
+  - `inference.ann.*` — параметры Annoy (`n_trees`, `metric`, `search_k`) и `top_k`.
+  - `inference.save_attentions` — если включить, дополнительно будут собраны attention-веса.
+
+### Пример запуска
+```bash
+python inference.py \
+  inference.checkpoint_path=/mnt/logs/deepfm_logs/run42/model_best.pth \
+  data.test_dict_path=/mnt/data/train_22/test_dict.pkl.gz \
+  inference.io.output_dir=/mnt/data/train_22/offline_eval \
+  inference.user_ids_source=test_dict \
+  inference.top_k=200 \
+  inference.metrics_k=[20,50,200]
+```
+
+Запуск в обратном направлении сводится к смене конфигов:
+```bash
+python inference.py \
+  model=deepfm_reverse \
+  datasets=transactions_21_reverse \
+  data.user_feature_sizes_path=/path/to/item_feature_sizes.json \
+  data.item_feature_sizes_path=/path/to/user_feature_sizes.json \
+  data.test_dict_path=/path/to/test_reverse_dict.pkl.gz \
+  inference.user_entity=kt \
+  inference.item_entity=dt \
+  inference.io.output_dir=/path/to/offline_eval_reverse
+```
+
+### Инструкция для продакшн-прогона
+1. **Завести окружные конфиги.** Создайте отдельные YAML-оверайды (например, `src/configs/inference_prod.yaml`) или храните готовые Hydra-команды в Airflow/cron, чтобы фиксировать пути до parquet/feature-словарей, чекпоинта и директории выгрузки.
+2. **Положить пайплайн в оркестратор.** В Airflow/Oozie достаточно вызвать `python -m src.pipelines.offline_inference` или `python inference.py ...`, передав overrides через переменные окружения. Скрипт идемпотентен: при `inference.reuse_artifacts=true` он подхватывает уже посчитанные эмбеддинги/кандидаты и дольше не гоняет модель.
+3. **Версионировать артефакты.** Задавайте уникальный `inference.io.output_dir` для каждого тестового окна (`/data/train_XX/offline_eval/<run_id>`). Там лежат:
+   - `embeddings/*.pkl.gz` — словари `{entity_id -> np.ndarray}`.
+   - `recommendations/*.pkl.gz` — `{user_id -> [item_id, ...]}`.
+   - `metrics.json` — агрегированный отчёт по K, который можно автоматически парсить в Grafana/MLflow.
+4. **Проверять метрики перед выкладкой.** В CI или Airflow-шаге сравнивайте `metrics.json` с референсом (например, целевым `MAP@50`). При просадке — проваливайте задачу, чтобы не выкладывать деградацию.
+5. **Подготовка к онлайну.** `recommendations/*.pkl.gz` можно напрямую передавать следующему этапу (например, построению финального ANN в FAISS или записи в Redis). Если нужен только каталог эмбеддингов для FAISS/ANN, можно выключить расчёт метрик `inference.metrics_k=[]` и уменьшить `top_k`.
 
 ## Обучение в обратном направлении (kt → dt)
 Модель теперь может обучаться зеркально — когда пользовательская башня отвечает за kt, а айтем-башня за dt. Для этого добавлены параллельные сущности:
@@ -90,7 +144,7 @@
      model.embed_dim=128 \
      optimizer.lr=3e-4
    ```
-3. Все остальные шаги инференса/съёма эмбеддингов идентичны: необходимо только указывать обратные словари (kt как пользователи) в ноутбуках `collect_embeddings.ipynb` и `recommendations_from_embeddings.ipynb`.
+3. Все остальные шаги инференса идентичны: в `python inference.py` укажите `model=deepfm_reverse`, `datasets=transactions_21_reverse`, поменяйте `data.*_feature_sizes_path` местами и выставьте `inference.user_entity=kt`, `inference.item_entity=dt`.
 
 ## Направления для улучшения и автоматизации
 1. **Убрать зависимость от ноутбуков**:
