@@ -527,7 +527,8 @@ def _apk(actual: Sequence[int], predicted: Sequence[int], k: int) -> float:
         if p in actual and p not in predicted[:i]:
             num_hits += 1.0
             score += num_hits / (i + 1.0)
-    return score / min(len(actual), k) if actual else 0.0
+    actual_len = len(actual)
+    return score / min(actual_len, k) if actual_len > 0 else 0.0
 
 
 def _recall_at_k(actual: Sequence[int], predicted: Sequence[int], k: int) -> float:
