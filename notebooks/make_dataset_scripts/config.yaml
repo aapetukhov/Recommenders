@@ -24,6 +24,9 @@ outputs:
   train_name: "deepfm_train_23_mock"
   test_name: "deepfm_test_23_mock"
   log_file: "app.log"
+filters:
+  min_test_cnt_dt: 15
+  min_test_cnt_kt: 15
 lda:
   n_topics: 50
   vocab_size: 5000
