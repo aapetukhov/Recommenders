@@ -11,10 +11,6 @@ dates:
   train_date_end: "2025-02-01"
   test_date_start: "2025-06-02"
   test_date_end: "2025-09-01"
-  # train_date_start: "2025-01-01"
-  # train_date_end: "2025-06-01"
-  # test_date_start: "2025-06-02"
-  # test_date_end: "2025-09-01"
 paths:
   embeddings: "hdfs://hdfsgw/arnsdpcc360__Podpiska_na_produkty_Postnovoj-CUSTOM_CIB_ML360-MON_AI_UL_EMBEDDING_V2/data/custom/cib/ml360/pa/mon_ai_ul_embedding_v2/mon=2024-12-31"
   context_words: "hdfs://hdfsgw/arnsdpcc360__smd_recsys_products-CUSTOM_CIB_ML360_CLIENTS_PRODUCTS_EXTRACT-TRANSACTIONS_PRODUCTS_EXTRACT/data/custom/cib/ml360_clients_products_extract/pa/transactions_products_extract"

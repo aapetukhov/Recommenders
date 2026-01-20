@@ -1,0 +1,156 @@
+22685380_omega-sbrf-ru@h ~/nfs/deepfm $ tree -L 3
+.
+├── data
+│   └── train_24
+│       ├── arnsdpsbx_t_team_fin_adviser.context_dt_cv_model
+│       ├── arnsdpsbx_t_team_fin_adviser.context_dt_lda_model
+│       ├── arnsdpsbx_t_team_fin_adviser.context_kt_cv_model
+│       ├── arnsdpsbx_t_team_fin_adviser.context_kt_lda_model
+│       ├── arnsdpsbx_t_team_fin_adviser.dt_embeddings_indexed
+│       ├── arnsdpsbx_t_team_fin_adviser.dt_pass
+│       ├── arnsdpsbx_t_team_fin_adviser.dt_pass_indexed
+│       ├── arnsdpsbx_t_team_fin_adviser.dt_stats
+│       ├── arnsdpsbx_t_team_fin_adviser.dt_topic_embeddings
+│       ├── arnsdpsbx_t_team_fin_adviser.indexer_dt
+│       ├── arnsdpsbx_t_team_fin_adviser.indexer_kt
+│       ├── arnsdpsbx_t_team_fin_adviser.kt_embeddings_indexed
+│       ├── arnsdpsbx_t_team_fin_adviser.kt_pass
+│       ├── arnsdpsbx_t_team_fin_adviser.kt_pass_indexed
+│       ├── arnsdpsbx_t_team_fin_adviser.kt_stats
+│       ├── arnsdpsbx_t_team_fin_adviser.kt_topic_embeddings
+│       ├── arnsdpsbx_t_team_fin_adviser.test_dict
+│       ├── arnsdpsbx_t_team_fin_adviser.test_interactions
+│       ├── arnsdpsbx_t_team_fin_adviser.test_reverse_dict
+│       ├── arnsdpsbx_t_team_fin_adviser.train_interactions
+│       ├── dt_embeddings_dict.pkl.gz
+│       ├── dt_features_dict.pkl.gz
+│       ├── dt_topic_embeddings_dict.pkl.gz
+│       ├── inn_dt_to_index.pkl.gz
+│       ├── inn_kt_to_index.pkl.gz
+│       ├── item_feature_sizes.json
+│       ├── kt_embeddings_dict.pkl.gz
+│       ├── kt_features_dict.pkl.gz
+│       ├── kt_topic_embeddings_dict.pkl.gz
+│       ├── offline_inference_direct
+│       ├── offline_inference_reverse
+│       ├── test_dict.pkl.gz
+│       ├── test_reverse_dict.pkl.gz
+│       ├── unique_inn_dt.pkl.gz
+│       ├── unique_inn_kt.pkl.gz
+│       └── user_feature_sizes.json
+├── deepfm_logs
+│   ├── train_24_reverse_run_1
+│   │   ├── config.yaml
+│   │   ├── info.log
+│   │   └── model_best.pth
+│   └── train_24_run_1
+│       ├── config.yaml
+│       ├── info.log
+│       └── model_best.pth
+├── inference.log
+├── inference.py
+├── notebooks
+│   ├── add_attention_to_recs.ipynb
+│   ├── allbiz_features
+│   │   ├── allbiz.ipynb
+│   │   ├── nikita_notebook.ipynb
+│   │   └── tovslova-allbz-WEIG__30-07__FULL.csv
+│   ├── allbiz.ipynb
+│   ├── collect_embeddings.ipynb
+│   ├── dt_attention_clusters.ipynb
+│   ├── eda.ipynb
+│   ├── embeddings_distribution.ipynb
+│   ├── kt_attention_clusters.ipynb
+│   ├── make_dataset_scripts
+│   │   ├── config.yaml
+│   │   ├── process_data.ipynb
+│   │   ├── run.ipynb
+│   │   └── utils.py
+│   ├── make_recommendations
+│   │   ├── make_recommendations_26_08_2025.ipynb
+│   │   ├── recommendations_from_embeddings.ipynb
+│   │   └── recommenders_metrics.ipynb
+│   ├── make_recommendations_26_08_2025.ipynb
+│   ├── process_data.ipynb
+│   ├── process_results
+│   │   ├── add_attention_to_recs.ipynb
+│   │   └── collect_embeddings.ipynb
+│   ├── recommendations_from_embeddings.ipynb
+│   └── recommenders_metrics.ipynb
+├── requirements.txt
+├── src
+│   ├── configs
+│   │   ├── dataloader
+│   │   ├── datasets
+│   │   ├── inference_24.yaml
+│   │   ├── inference_reverse_24.yaml
+│   │   ├── metrics
+│   │   ├── model
+│   │   ├── onebatchtest.yaml
+│   │   ├── rankloss.yaml
+│   │   ├── test_21.yaml
+│   │   ├── test_24.yaml
+│   │   ├── test_reverse_24.yaml
+│   │   ├── transforms
+│   │   └── writer
+│   ├── datasets
+│   │   ├── collate.py
+│   │   ├── data_utils.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   ├── stream_dataset.py
+│   │   └── stream_dataset_reverse.py
+│   ├── __init__.py
+│   ├── logger
+│   │   ├── cometml.py
+│   │   ├── __init__.py
+│   │   ├── logger_config.json
+│   │   ├── logger.py
+│   │   ├── __pycache__
+│   │   ├── tensorboard.py
+│   │   ├── utils.py
+│   │   └── wandb.py
+│   ├── loss
+│   │   ├── bceloss.py
+│   │   ├── bceloss_reverse.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   └── rankloss.py
+│   ├── metrics
+│   │   ├── accuracy.py
+│   │   ├── auc_roc.py
+│   │   ├── average_precision.py
+│   │   ├── base_metric.py
+│   │   ├── f1_score.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   └── tracker.py
+│   ├── models
+│   │   ├── deepfm.py
+│   │   ├── deepfm_reverse.py
+│   │   ├── __init__.py
+│   │   └── __pycache__
+│   ├── pipelines
+│   │   ├── __init__.py
+│   │   ├── offline_inference.py
+│   │   └── __pycache__
+│   ├── __pycache__
+│   │   ├── __init__.cpython-311.pyc
+│   │   └── __init__.cpython-312.pyc
+│   ├── trainer
+│   │   ├── base_trainer.py
+│   │   ├── inferencer.py
+│   │   ├── __init__.py
+│   │   ├── __pycache__
+│   │   └── trainer.py
+│   └── utils
+│       ├── __init__.py
+│       ├── init_utils.py
+│       ├── io_utils.py
+│       └── __pycache__
+├── tensorboard
+│   └── testing
+│       ├── train_24_reverse_run_1
+│       └── train_24_run_1
+├── test.py
+└── train.py
